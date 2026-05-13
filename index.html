@@ -655,19 +655,21 @@ h3.ct{font-family:'Inter',sans-serif;font-size:14px;font-weight:700;color:var(--
     <div class="two" style="margin-top:16px">
       <div class="fu" style="transition-delay:.4s">
         <h3 class="ct" style="margin-bottom:10px">⌨️ SINTAXIS CREATE DATABASE</h3>
-        <div class="sql"><span class="kw">CREATE DATABASE</span> nombre_basedatos
-<span class="kw">ON</span> [<span class="kw">PRIMARY</span>] (
-  <span class="fn">NAME</span> = nombre_lógico_data ,
-  <span class="fn">FILENAME</span> = <span class="str">'ruta\archivo.mdf'</span> ,
-  <span class="fn">SIZE</span> = <span class="nm">8MB</span> ,
-  <span class="fn">MAXSIZE</span> = <span class="nm">15MB</span> ,
-  <span class="fn">FILEGROWTH</span> = <span class="nm">1MB</span> )
-<span class="kw">LOG ON</span> (
-  <span class="fn">NAME</span> = nombre_lógico_log ,
-  <span class="fn">FILENAME</span> = <span class="str">'ruta\archivo.ldf'</span> ,
-  <span class="fn">SIZE</span> = <span class="nm">3MB</span> ,
-  <span class="fn">MAXSIZE</span> = <span class="nm">8MB</span> ,
-  <span class="fn">FILEGROWTH</span> = <span class="nm">10%</span> )
+        <div class="sql"><span class="kw">CREATE DATABASE</span> nombre_basedatos<br>
+<span class="kw">ON</span> [<span class="kw">PRIMARY</span>] (<br>
+  &nbsp;&nbsp;<span class="fn">NAME</span> = nombre_lógico_data ,<br>
+  &nbsp;&nbsp;<span class="fn">FILENAME</span> = <span class="str">'ruta\archivo.mdf'</span> ,<br>
+  &nbsp;&nbsp;<span class="fn">SIZE</span> = <span class="nm">8MB</span> ,<br>
+  &nbsp;&nbsp;<span class="fn">MAXSIZE</span> = <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">15MB</span> ,<br>
+  &nbsp;&nbsp;<span class="fn">FILEGROWTH</span> = <span class="nm">1MB</span> )<br>
+<span class="kw">LOG ON</span> (<br>
+  &nbsp;&nbsp;<span class="fn">NAME</span> = nombre_lógico_log ,<br>
+  &nbsp;&nbsp;<span class="fn">FILENAME</span> = <span class="str">'ruta\archivo.ldf'</span> ,<br>
+  &nbsp;&nbsp;<span class="fn">SIZE</span> = <span class="nm">3MB</span> ,<br>
+  &nbsp;&nbsp;<span class="fn">MAXSIZE</span> = <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">8MB</span> ,<br>
+  &nbsp;&nbsp;<span class="fn">FILEGROWTH</span> = <span class="nm">10%</span> )<br>
 <span class="kw">GO</span></div>
         <div class="hl" style="margin-top:10px;font-size:12px">
           <strong>Ejercicio 2.1:</strong> Crear con propiedades predeterminadas:<br>
