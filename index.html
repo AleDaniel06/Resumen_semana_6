@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Server 2022 · CAP II · UPLA</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050a12;
+  --bg2:#080f1a;
+  --card:#0a1525;
+  --card2:#0d1c30;
+  --n1:#00d4ff;   /* cyan neón */
+  --n2:#7c3aed;   /* violeta */
+  --n3:#00ff88;   /* verde neón */
+  --n4:#ff6b35;   /* naranja neón */
+  --n5:#ff3d7f;   /* rosa neón */
+  --n6:#ffd700;   /* dorado */
+  --text:#e0f0ff;
+  --text2:#7aaccf;
+  --muted:#3a6080;
+  --border:rgba(0,212,255,0.15);
+  --border2:rgba(0,212,255,0.08);
+  --glow1:rgba(0,212,255,0.2);
+  --glow2:rgba(124,58,237,0.2);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;cursor:none}
+
+/* ── CURSOR ── */
+.cur{width:10px;height:10px;background:var(--n1);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9999;
+  box-shadow:0 0 10px var(--n1),0 0 20px var(--n1);transition:transform .1s}
+.cring{width:32px;height:32px;border:1.5px solid var(--n1);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9998;transition:all .15s;opacity:.6}
+
+/* ── SCANLINES OVERLAY ── */
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:500;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px)}
+
+/* ── STAR FIELD ── */
+#stars{position:fixed;inset:0;z-0;pointer-events:none}
+
+/* ── GRID BG ── */
+.gridbg{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(0,212,255,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,212,255,.04) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse at center,rgba(0,0,0,1) 0%,rgba(0,0,0,0) 80%)}
+
+/* ── CORNER DECORATIONS ── */
+.corner{position:fixed;width:60px;height:60px;pointer-events:none;z-index:100}
+.corner.tl{top:16px;left:16px;border-top:2px solid var(--n1);border-left:2px solid var(--n1)}
+.corner.tr{top:16px;right:16px;border-top:2px solid var(--n1);border-right:2px solid var(--n1)}
+.corner.bl{bottom:16px;left:16px;border-bottom:2px solid var(--n1);border-left:2px solid var(--n1)}
+.corner.br{bottom:16px;right:16px;border-bottom:2px solid var(--n1);border-right:2px solid var(--n1)}
+
+/* ── PROGRESS BAR ── */
+.pbar{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(0,212,255,.1);z-index:400}
+.pfill{height:100%;background:linear-gradient(90deg,var(--n2),var(--n1),var(--n3));
+  box-shadow:0 0 12px var(--n1);transition:width .4s ease;width:0}
+
+/* ── TOP HUD ── */
+.hud{position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  background:rgba(8,15,26,.85);backdrop-filter:blur(20px);
+  border:1px solid var(--border);border-radius:0;
+  padding:10px 24px;display:flex;align-items:center;gap:18px;z-index:300;
+  clip-path:polygon(12px 0%,calc(100% - 12px) 0%,100% 12px,100% 100%,calc(100% - 12px) 100%,12px 100%,0% calc(100% - 12px),0% 12px);
+  box-shadow:0 0 30px rgba(0,212,255,.15),inset 0 0 30px rgba(0,0,0,.5)}
+.hud-brand{color:var(--n1);font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;letter-spacing:.15em;
+  text-shadow:0 0 10px var(--n1)}
+.hud-sep{color:var(--muted);font-size:14px}
+.hud-item{color:var(--muted);cursor:pointer;transition:all .2s;font-size:10px;font-weight:600;
+  font-family:'Share Tech Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
+.hud-item:hover{color:var(--n1);text-shadow:0 0 8px var(--n1)}
+
+/* ── NAV DOTS ── */
+.ndots{position:fixed;right:22px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:12px;z-index:300}
+.nd{width:8px;height:8px;border-radius:0;border:1.5px solid rgba(0,212,255,.35);cursor:pointer;transition:all .3s;
+  transform:rotate(45deg)}
+.nd.active{background:var(--n1);border-color:var(--n1);box-shadow:0 0 12px var(--n1);transform:rotate(45deg) scale(1.4)}
+
+/* ── SLIDES ── */
+.slides{position:relative;z-index:1}
+section{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:90px 56px;position:relative;opacity:0;transform:translateY(30px);
+  transition:opacity .6s,transform .6s}
+section.vis{opacity:1;transform:translateY(0)}
+.sn{font-family:'Orbitron',sans-serif;font-size:160px;font-weight:900;
+  color:rgba(0,212,255,.03);position:absolute;top:0;right:24px;line-height:1;
+  pointer-events:none;user-select:none;letter-spacing:-.05em}
+
+/* ── ANIMATIONS ── */
+.fu{opacity:0;transform:translateY(20px);transition:all .5s ease}
+.fu.show{opacity:1;transform:translateY(0)}
+.fr{opacity:0;transform:translateX(-20px);transition:all .5s ease}
+.fr.show{opacity:1;transform:translateX(0)}
+
+/* ── LABEL ── */
+.lbl{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--n1);margin-bottom:14px;display:inline-flex;align-items:center;gap:10px}
+.lbl::before{content:'▶';font-size:8px}
+
+/* ── TITLES - Orbitron para títulos principales ── */
+h1.ht{font-family:'Orbitron',sans-serif;font-size:clamp(36px,6vw,72px);font-weight:900;
+  line-height:.96;letter-spacing:-.01em;margin-bottom:20px}
+h1.ht .gr{background:linear-gradient(135deg,var(--n1),var(--n2),var(--n3));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 20px rgba(0,212,255,.3))}
+h2.st{font-family:'Orbitron',sans-serif;font-size:clamp(20px,3vw,36px);font-weight:700;
+  line-height:1.1;letter-spacing:.02em;color:var(--text)}
+h3.ct{font-family:'Inter',sans-serif;font-size:14px;font-weight:700;color:var(--n1);margin-bottom:8px;
+  text-transform:uppercase;letter-spacing:.08em}
+
+/* ── BODY TEXT - Inter ── */
+.bt{font-size:13.5px;color:var(--text2);line-height:1.75}
+.bt strong{color:var(--text)}
+
+/* ── GAME CARDS ── */
+.gcard{background:var(--card);border:1px solid var(--border);border-radius:0;
+  padding:20px 18px;transition:all .3s;position:relative;overflow:hidden;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px))}
+.gcard::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,212,255,.03) 0%,transparent 60%);pointer-events:none}
+.gcard::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--n1),transparent);opacity:.5}
+.gcard:hover{border-color:var(--n1);box-shadow:0 0 24px rgba(0,212,255,.2),inset 0 0 24px rgba(0,212,255,.03);
+  transform:translateY(-3px)}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+.four{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}
+
+/* ── PILLS ── */
+.pill{display:inline-block;padding:3px 10px;border-radius:0;font-size:10px;font-weight:700;margin:2px;
+  font-family:'Share Tech Mono',monospace;letter-spacing:.06em;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+.p1{background:rgba(0,212,255,.15);color:var(--n1);border:1px solid rgba(0,212,255,.3)}
+.p2{background:rgba(0,255,136,.12);color:var(--n3);border:1px solid rgba(0,255,136,.3)}
+.p3{background:rgba(255,107,53,.12);color:var(--n4);border:1px solid rgba(255,107,53,.3)}
+.p4{background:rgba(255,61,127,.12);color:var(--n5);border:1px solid rgba(255,61,127,.3)}
+.p5{background:rgba(255,215,0,.12);color:var(--n6);border:1px solid rgba(255,215,0,.3)}
+
+/* ── HIGHLIGHT BOXES ── */
+.hl{padding:12px 16px;border-left:3px solid var(--n1);font-size:13px;line-height:1.65;margin-top:10px;
+  background:rgba(0,212,255,.05)}
+.hl2{border-left-color:var(--n3);background:rgba(0,255,136,.05)}
+.hl3{border-left-color:var(--n4);background:rgba(255,107,53,.05)}
+
+/* ── CODE BLOCKS ── */
+.sql{background:#020c14;border:1px solid rgba(0,212,255,.2);border-radius:0;
+  padding:14px 16px;font-family:'Share Tech Mono',monospace;font-size:12px;
+  line-height:1.8;color:#7adbff;margin-top:12px;overflow-x:auto;
+  box-shadow:inset 0 0 30px rgba(0,0,0,.5),0 0 20px rgba(0,212,255,.05);
+  position:relative;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))}
+.sql::before{content:'// T-SQL';position:absolute;top:6px;right:12px;
+  font-size:9px;color:rgba(0,212,255,.3);letter-spacing:.15em}
+.kw{color:#00d4ff} .fn{color:#a78bfa} .str{color:#00ff88} .nm{color:#ffd700} .cm{color:#3a6080}
+
+/* ── FLOW DIAGRAM ── */
+.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+.fbox{background:var(--card2);border:1px solid var(--border);padding:12px 14px;
+  text-align:center;min-width:88px;transition:all .3s;cursor:default;
+  clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+.fbox:hover{border-color:var(--n1);box-shadow:0 0 16px rgba(0,212,255,.2)}
+.fbox .fi{font-size:24px;display:block;margin-bottom:5px}
+.fbox .ft{font-size:11px;font-weight:700;color:var(--text);font-family:'Inter',sans-serif;line-height:1.3}
+.fbox .fs{font-size:9px;color:var(--muted);margin-top:2px;font-family:'Share Tech Mono',monospace}
+.farr{font-size:16px;color:var(--n1);text-shadow:0 0 8px var(--n1);flex-shrink:0}
+
+/* ── MINI TABLE ── */
+.mtable{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px;border:1px solid var(--border)}
+.mtable th{padding:9px 12px;background:rgba(0,212,255,.1);font-family:'Share Tech Mono',monospace;
+  font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--n1);
+  text-align:left;border-bottom:1px solid var(--border)}
+.mtable td{padding:8px 12px;color:var(--text2);border-bottom:1px solid rgba(0,212,255,.05)}
+.mtable tr:hover td{background:rgba(0,212,255,.04)}
+.mtable tr:last-child td{border-bottom:none}
+.mtable td:first-child{color:var(--n1);font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700}
+
+/* ── FILE VISUAL ── */
+.file-vis{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;justify-content:center}
+.fcard{background:var(--card2);border:1px solid var(--border);padding:16px 14px;
+  text-align:center;min-width:120px;flex:1;transition:all .3s;position:relative;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px))}
+.fcard:hover{transform:translateY(-4px)}
+.fcard.c1{border-color:rgba(0,212,255,.3);box-shadow:0 0 20px rgba(0,212,255,.1)}
+.fcard.c2{border-color:rgba(0,255,136,.3);box-shadow:0 0 20px rgba(0,255,136,.1)}
+.fcard.c3{border-color:rgba(255,107,53,.3);box-shadow:0 0 20px rgba(255,107,53,.1)}
+.fcard .fci{font-size:34px;display:block;margin-bottom:8px}
+.fcard .fcn{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700}
+.fcard.c1 .fcn{color:var(--n1)} .fcard.c2 .fcn{color:var(--n3)} .fcard.c3 .fcn{color:var(--n4)}
+.fcard .fce{font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;
+  padding:2px 8px;border-radius:0;margin:4px auto 6px;display:inline-block}
+.fcard.c1 .fce{background:rgba(0,212,255,.12);color:var(--n1);border:1px solid rgba(0,212,255,.3)}
+.fcard.c2 .fce{background:rgba(0,255,136,.12);color:var(--n3);border:1px solid rgba(0,255,136,.3)}
+.fcard.c3 .fce{background:rgba(255,107,53,.12);color:var(--n4);border:1px solid rgba(255,107,53,.3)}
+.fcard .fcd{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* ── TRANSACTION STEPS ── */
+.tx-flow{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.tx-op{display:flex;align-items:center;gap:12px;background:var(--card2);
+  border:1px solid var(--border);padding:11px 14px;transition:all .3s;
+  clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+.tx-op:hover{border-color:var(--n1)}
+.tx-op.ok{border-left:3px solid var(--n3)}
+.tx-op.fail{border-left:3px solid var(--n5)}
+.tx-op.roll{border-left:3px solid var(--n4)}
+.tx-num{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:800;color:var(--n1);min-width:26px}
+.tx-txt{font-size:12.5px;color:var(--text2)}
+.tx-txt strong{color:var(--text)}
+.tx-badge{margin-left:auto;font-size:9px;font-weight:700;padding:2px 8px;
+  font-family:'Share Tech Mono',monospace;white-space:nowrap;border:1px solid}
+.ok .tx-badge{color:var(--n3);border-color:rgba(0,255,136,.3);background:rgba(0,255,136,.1)}
+.fail .tx-badge{color:var(--n5);border-color:rgba(255,61,127,.3);background:rgba(255,61,127,.1)}
+.roll .tx-badge{color:var(--n4);border-color:rgba(255,107,53,.3);background:rgba(255,107,53,.1)}
+
+/* ── SYS DB VISUAL ── */
+.sysdb-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.sdb{background:var(--card2);border:1px solid var(--border);padding:16px;transition:all .3s;
+  position:relative;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))}
+.sdb.s1{border-top:2px solid var(--n1)} .sdb.s2{border-top:2px solid var(--n3)}
+.sdb.s3{border-top:2px solid var(--n4)} .sdb.s4{border-top:2px solid var(--n5)}
+.sdb:hover{transform:translateY(-3px)}
+.sdb .sn2{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;margin-bottom:6px}
+.sdb.s1 .sn2{color:var(--n1)} .sdb.s2 .sn2{color:var(--n3)}
+.sdb.s3 .sn2{color:var(--n4)} .sdb.s4 .sn2{color:var(--n5)}
+.sdb .si{font-size:26px;margin-bottom:8px;display:block}
+
+/* ── CONFIG TABLE ── */
+.cfg{background:var(--card2);border:1px solid var(--border);border-radius:0;
+  overflow:hidden;margin-top:10px}
+.cfg-row{display:flex;border-bottom:1px solid var(--border2)}
+.cfg-row:last-child{border-bottom:none}
+.cfg-key{background:rgba(0,212,255,.07);padding:10px 14px;font-family:'Share Tech Mono',monospace;
+  font-size:11px;color:var(--n1);min-width:140px;display:flex;align-items:center;border-right:1px solid var(--border2)}
+.cfg-val{padding:10px 14px;font-size:12.5px;color:var(--text2);display:flex;align-items:center;flex:1}
+
+/* ── ACTIVITY SECTION ── */
+.act-wrap{background:var(--card2);border:1px solid rgba(0,212,255,.2);
+  padding:26px 22px;position:relative;
+  clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px));
+  box-shadow:0 0 30px rgba(0,212,255,.08)}
+.act-wrap::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--n1),transparent)}
+.aitem{background:var(--card);border:1px solid var(--border);
+  padding:16px 18px;margin-top:10px;transition:all .3s;
+  clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+.aitem:hover{border-color:var(--n1);box-shadow:0 0 16px rgba(0,212,255,.15);transform:translateX(4px)}
+.aq{font-size:13px;font-weight:700;color:var(--n1);margin-bottom:8px;
+  font-family:'Inter',sans-serif;display:flex;align-items:flex-start;gap:8px}
+.qnum{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
+  background:linear-gradient(135deg,var(--n1),var(--n2));color:#000;
+  font-size:10px;font-weight:900;flex-shrink:0;font-family:'Orbitron',sans-serif;
+  clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)}
+.ar{font-size:12.5px;color:var(--text2);line-height:1.72;padding-left:30px}
+.ar strong{color:var(--n1)}
+
+/* ── SCROLL CTA ── */
+.scta{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.25em;
+  cursor:pointer;animation:bnc 2.2s ease-in-out infinite}
+.scta svg{width:16px;stroke:var(--n1);filter:drop-shadow(0 0 6px var(--n1))}
+@keyframes bnc{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(7px)}}
+
+/* ── GLOW TEXT ── */
+.glow-c{color:var(--n1);text-shadow:0 0 12px var(--n1)}
+.glow-g{color:var(--n3);text-shadow:0 0 12px var(--n3)}
+.glow-o{color:var(--n4);text-shadow:0 0 12px var(--n4)}
+.glow-r{color:var(--n5);text-shadow:0 0 12px var(--n5)}
+
+/* ── STAT BOXES ── */
+.stat-box{background:var(--card2);border:1px solid var(--border);padding:16px 14px;text-align:center;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+  transition:all .3s}
+.stat-box:hover{border-color:var(--n1);box-shadow:0 0 20px rgba(0,212,255,.2)}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:26px;font-weight:900;color:var(--n1);
+  text-shadow:0 0 16px var(--n1)}
+.stat-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;letter-spacing:.12em}
+
+/* ── OBJECT CARDS ── */
+.ocard{background:var(--card2);border:1px solid var(--border);padding:14px 12px;text-align:center;
+  transition:all .3s;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));
+  cursor:default}
+.ocard:hover{transform:translateY(-4px)}
+.ocard .oi{font-size:28px;margin-bottom:6px;display:block}
+.ocard .on{font-family:'Inter',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.ocard .od{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4}
+
+/* ── FINAL ── */
+.final{text-align:center;max-width:700px}
+.final h2{font-family:'Orbitron',sans-serif;font-size:clamp(28px,5vw,58px);font-weight:900;
+  letter-spacing:.02em;margin-bottom:16px;line-height:1.05;color:var(--text)}
+.final h2 span{background:linear-gradient(135deg,var(--n1),var(--n2),var(--n3));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 20px rgba(0,212,255,.4))}
+.cbox{margin-top:36px;padding:24px 30px;background:var(--card2);border:1px solid var(--border);
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));
+  box-shadow:0 0 30px rgba(0,212,255,.1)}
+.cbox p{font-size:13px;color:var(--text2)} .cbox strong{color:var(--n1)}
+.cdiv{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:12px 0}
+
+@media(max-width:768px){
+  .two,.three,.four,.sysdb-grid{grid-template-columns:1fr}
+  .hud{display:none} body{cursor:auto} .cur,.cring{display:none}
+  section{padding:70px 22px}
+  .corner{display:none}
+}
+
+/* ── TYPING ANIMATION ── */
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.cursor-blink{animation:blink 1s infinite}
+
+/* ── NEON DIVIDER ── */
+.ndivider{height:1px;background:linear-gradient(90deg,transparent,var(--n1),var(--n2),var(--n1),transparent);
+  margin:20px 0;opacity:.4}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#020810}
+::-webkit-scrollbar-thumb{background:var(--n2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--n1)}
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+<div class="cur" id="cur"></div>
+<div class="cring" id="crng"></div>
+<div class="scanlines"></div>
+<div class="gridbg"></div>
+<div class="corner tl"></div><div class="corner tr"></div>
+<div class="corner bl"></div><div class="corner br"></div>
+<div class="pbar"><div class="pfill" id="pf"></div></div>
+
+<nav class="hud">
+  <span class="hud-brand">SQL//DB</span><span class="hud-sep">◈</span>
+  <span class="hud-item" onclick="go(0)">INICIO</span>
+  <span class="hud-item" onclick="go(2)">BASE DATOS</span>
+  <span class="hud-item" onclick="go(3)">OBJETOS</span>
+  <span class="hud-item" onclick="go(4)">SISTEMA</span>
+  <span class="hud-item" onclick="go(5)">CREAR BD</span>
+  <span class="hud-item" onclick="go(6)">TRANSACC.</span>
+  <span class="hud-item" onclick="go(7)">CONFIG.</span>
+  <span class="hud-item" onclick="go(8)">MISIONES</span>
+</nav>
+<div class="ndots" id="nd"></div>
+
+<div class="slides">
+
+<!-- ══ 0: HERO ══ -->
+<section id="s0">
+  <div class="sn">00</div>
+  <div style="max-width:960px;width:100%">
+    <div style="display:inline-flex;align-items:center;gap:8px;
+      background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);
+      padding:6px 16px;font-size:11px;color:var(--n1);font-weight:700;
+      font-family:'Share Tech Mono',monospace;letter-spacing:.12em;margin-bottom:20px;
+      text-shadow:0 0 8px var(--n1)">
+      ◈ UPLA — BASE DE DATOS II — CAPÍTULO II ◈
+    </div>
+    <div class="lbl">Microsoft SQL Server 2022</div>
+    <h1 class="ht">BASES<br>DE DATOS<br><span class="gr">SQL SERVER</span></h1>
+    <p style="font-size:15px;color:var(--text2);max-width:500px;line-height:1.8;margin-bottom:28px">
+      Aprende qué es una base de datos, sus objetos, las BD del sistema, cómo crearlas, las transacciones y la configuración avanzada con SQL Server 2022.
+    </p>
+    <!-- HUD stats -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px">
+      <div class="stat-box"><div class="stat-val">4</div><div class="stat-lbl">BD SISTEMA</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--n3);text-shadow:0 0 16px var(--n3)">8+</div><div class="stat-lbl">TIPOS OBJETO</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--n4);text-shadow:0 0 16px var(--n4)">3</div><div class="stat-lbl">TIPOS ARCHIVO</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--n5);text-shadow:0 0 16px var(--n5)">20</div><div class="stat-lbl">ACTIVIDADES</div></div>
+    </div>
+    <div style="display:flex;gap:28px;flex-wrap:wrap">
+      <div><span style="display:block;color:var(--muted);font-size:9px;font-family:'Share Tech Mono',monospace;margin-bottom:3px;letter-spacing:.15em">PLAYER</span>
+      <span style="font-size:13px;font-weight:600">Alexandra Milagros Cuchula Daniel</span></div>
+      <div><span style="display:block;color:var(--muted);font-size:9px;font-family:'Share Tech Mono',monospace;margin-bottom:3px;letter-spacing:.15em">MASTER</span>
+      <span style="font-size:13px;font-weight:600">Ing. Raúl Fernández Bejarano</span></div>
+      <div><span style="display:block;color:var(--muted);font-size:9px;font-family:'Share Tech Mono',monospace;margin-bottom:3px;letter-spacing:.15em">SEASON</span>
+      <span style="font-size:13px;font-weight:600">UPLA · 2025</span></div>
+    </div>
+  </div>
+  <div class="scta" onclick="go(1)">
+    <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    PRESS START
+  </div>
+</section>
+
+<!-- ══ 1: MAPA ══ -->
+<section id="s1">
+  <div class="sn">01</div>
+  <div style="max-width:960px;width:100%">
+    <div class="lbl fu">// MAPA DE NIVELES</div>
+    <h2 class="st fu" style="transition-delay:.1s">SELECCIONA<br>TU MISIÓN</h2>
+    <div class="four" style="margin-top:26px">
+      <div class="gcard fu" style="transition-delay:.2s;cursor:pointer;border-top:2px solid var(--n1)" onclick="go(2)">
+        <div style="font-size:32px;margin-bottom:8px">🗄️</div>
+        <div class="lbl" style="font-size:9px;margin-bottom:6px">NIVEL 01</div>
+        <h3 class="ct">¿Qué es BD?</h3>
+        <p class="bt" style="font-size:11.5px">Concepto, tipos y objetos internos de SQL Server</p>
+        <div class="hl" style="margin-top:10px;font-size:11px;padding:6px 10px">★★★☆☆ BÁSICO</div>
+      </div>
+      <div class="gcard fu" style="transition-delay:.3s;cursor:pointer;border-top:2px solid var(--n3)" onclick="go(4)">
+        <div style="font-size:32px;margin-bottom:8px">⚙️</div>
+        <div class="lbl" style="font-size:9px;margin-bottom:6px;color:var(--n3)">NIVEL 02</div>
+        <h3 class="ct" style="color:var(--n3)">BD Sistema</h3>
+        <p class="bt" style="font-size:11.5px">master, model, msdb y tempdb explicados</p>
+        <div class="hl hl2" style="margin-top:10px;font-size:11px;padding:6px 10px">★★★★☆ INTERMEDIO</div>
+      </div>
+      <div class="gcard fu" style="transition-delay:.4s;cursor:pointer;border-top:2px solid var(--n4)" onclick="go(5)">
+        <div style="font-size:32px;margin-bottom:8px">🏗️</div>
+        <div class="lbl" style="font-size:9px;margin-bottom:6px;color:var(--n4)">NIVEL 03</div>
+        <h3 class="ct" style="color:var(--n4)">Crear BD</h3>
+        <p class="bt" style="font-size:11.5px">Archivos, transacciones y CREATE DATABASE</p>
+        <div class="hl hl3" style="margin-top:10px;font-size:11px;padding:6px 10px">★★★★★ AVANZADO</div>
+      </div>
+      <div class="gcard fu" style="transition-delay:.5s;cursor:pointer;border-top:2px solid var(--n5)" onclick="go(8)">
+        <div style="font-size:32px;margin-bottom:8px">🎯</div>
+        <div class="lbl" style="font-size:9px;margin-bottom:6px;color:var(--n5)">BOSS LEVEL</div>
+        <h3 class="ct" style="color:var(--n5)">Misiones</h3>
+        <p class="bt" style="font-size:11.5px">20 actividades teóricas y prácticas resueltas</p>
+        <div class="hl" style="border-left-color:var(--n5);background:rgba(255,61,127,.05);margin-top:10px;font-size:11px;padding:6px 10px">★★★★★ BOSS</div>
+      </div>
+    </div>
+    <div class="fu" style="transition-delay:.6s;margin-top:20px">
+      <div class="flow">
+        <div class="fbox"><span class="fi">💡</span><div class="ft">Concepto</div><div class="fs">¿qué es BD?</div></div>
+        <div class="farr">▶</div>
+        <div class="fbox"><span class="fi">📦</span><div class="ft">Objetos</div><div class="fs">tablas, vistas…</div></div>
+        <div class="farr">▶</div>
+        <div class="fbox"><span class="fi">🗂️</span><div class="ft">Sistema</div><div class="fs">master, model…</div></div>
+        <div class="farr">▶</div>
+        <div class="fbox"><span class="fi">🏗️</span><div class="ft">Crear</div><div class="fs">CREATE DATABASE</div></div>
+        <div class="farr">▶</div>
+        <div class="fbox"><span class="fi">🔄</span><div class="ft">Transacción</div><div class="fs">ACID</div></div>
+        <div class="farr">▶</div>
+        <div class="fbox"><span class="fi">🔧</span><div class="ft">Configurar</div><div class="fs">ALTER DATABASE</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 2: QUÉ ES UNA BD ══ -->
+<section id="s2">
+  <div class="sn">02</div>
+  <div style="max-width:1100px;width:100%">
+    <div class="lbl fr">// NIVEL 01 · FUNDAMENTO</div>
+    <h2 class="st fr" style="transition-delay:.1s">¿QUÉ ES UNA<br>BASE DE DATOS?</h2>
+    <div class="two" style="margin-top:22px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="gcard fr" style="transition-delay:.2s">
+          <h3 class="ct">📖 DEFINICIÓN</h3>
+          <p class="bt">Conjunto organizado de datos almacenados electrónicamente. Permite la <strong>recuperación, modificación y administración</strong> eficiente y segura de la información.</p>
+          <div class="hl">SQL Server organiza todo en <span class="glow-c"><strong>tablas (filas × columnas)</strong></span> — igual que Excel pero con superpoderes.</div>
+        </div>
+        <div class="gcard fr" style="transition-delay:.3s">
+          <h3 class="ct">🗂️ TIPOS DE BD</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+            <div style="background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);padding:10px;text-align:center">
+              <div style="font-size:22px">📊</div><div style="font-size:11px;font-weight:700;color:var(--n1);margin-top:4px">Relacionales</div>
+              <div style="font-size:10px;color:var(--muted)">SQL · tablas</div>
+            </div>
+            <div style="background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.15);padding:10px;text-align:center">
+              <div style="font-size:22px">📄</div><div style="font-size:11px;font-weight:700;color:var(--n3);margin-top:4px">NoSQL</div>
+              <div style="font-size:10px;color:var(--muted)">sin esquema</div>
+            </div>
+            <div style="background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.15);padding:10px;text-align:center">
+              <div style="font-size:22px">📁</div><div style="font-size:11px;font-weight:700;color:var(--n4);margin-top:4px">Documentos</div>
+              <div style="font-size:10px;color:var(--muted)">flexibles</div>
+            </div>
+            <div style="background:rgba(255,61,127,.06);border:1px solid rgba(255,61,127,.15);padding:10px;text-align:center">
+              <div style="font-size:22px">🔗</div><div style="font-size:11px;font-weight:700;color:var(--n5);margin-top:4px">Grafos</div>
+              <div style="font-size:10px;color:var(--muted)">nodos y aristas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="gcard fr" style="transition-delay:.4s">
+        <h3 class="ct">🔑 CONCEPTOS CLAVE</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+          <div style="background:rgba(0,212,255,.05);border-left:3px solid var(--n1);padding:11px 13px">
+            <div style="font-size:12px;font-weight:700;color:var(--n1);margin-bottom:3px">📋 COLUMNAS (columns)</div>
+            <p class="bt" style="font-size:12px">Almacenan datos. Cada columna tiene <strong>tipo de dato</strong> y nombre único. Ej: nombre (cadena), fecha_nac (fecha), hijos (int).</p>
+          </div>
+          <div style="background:rgba(0,255,136,.05);border-left:3px solid var(--n3);padding:11px 13px">
+            <div style="font-size:12px;font-weight:700;color:var(--n3);margin-bottom:3px">🔑 CLAVE PRIMARIA (PK)</div>
+            <p class="bt" style="font-size:12px">Valor <strong>único e irrepetible</strong> que identifica cada fila. No puede ser nulo. Generalmente la primera columna.</p>
+          </div>
+          <div style="background:rgba(255,107,53,.05);border-left:3px solid var(--n4);padding:11px 13px">
+            <div style="font-size:12px;font-weight:700;color:var(--n4);margin-bottom:3px">🔗 CLAVE FORÁNEA (FK)</div>
+            <p class="bt" style="font-size:12px">Referencia la PK de <strong>otra tabla</strong>. Crea relaciones entre tablas y garantiza integridad referencial.</p>
+          </div>
+          <div style="background:rgba(255,61,127,.05);border-left:3px solid var(--n5);padding:11px 13px">
+            <div style="font-size:12px;font-weight:700;color:var(--n5);margin-bottom:3px">📊 TIPOS DE DATOS</div>
+            <p class="bt" style="font-size:12px">Cada columna solo acepta un tipo: <strong>varchar, int, date, bit, varbinary</strong>, etc. Define el almacenamiento.</p>
+          </div>
+        </div>
+        <!-- Mini demo table -->
+        <table class="mtable" style="margin-top:14px">
+          <thead><tr><th>🔑 idCategoria</th><th>Nombre</th><th>Descripcion</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td style="color:var(--text)">GOLOSINAS</td><td>GALLETAS, CHOCOLATES…</td></tr>
+            <tr><td>2</td><td style="color:var(--text)">EMBUTIDOS</td><td>JAMONADAS, JAMONES…</td></tr>
+            <tr><td>3</td><td style="color:var(--text)">LÁCTEOS</td><td>LECHES, YOGURES…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 3: OBJETOS ══ -->
+<section id="s3">
+  <div class="sn">03</div>
+  <div style="max-width:1100px;width:100%">
+    <div class="lbl fu">// NIVEL 01B · OBJETOS</div>
+    <h2 class="st fu" style="transition-delay:.1s">OBJETOS DE UNA BD<br>EN SQL SERVER</h2>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:22px">
+      <div class="ocard fu" style="transition-delay:.2s;border-top:2px solid var(--n1)">
+        <span class="oi">📋</span><div class="on" style="color:var(--n1)">Tablas</div>
+        <div class="od">Almacenan datos en filas y columnas. Objeto principal de la BD.</div>
+        <div class="pill p1" style="margin-top:8px">tables</div>
+      </div>
+      <div class="ocard fu" style="transition-delay:.25s;border-top:2px solid var(--n3)">
+        <span class="oi">👁️</span><div class="on" style="color:var(--n3)">Vistas</div>
+        <div class="od">Consultas almacenadas. Ocultan columnas sensibles y simplifican el acceso.</div>
+        <div class="pill p2" style="margin-top:8px">views</div>
+      </div>
+      <div class="ocard fu" style="transition-delay:.3s;border-top:2px solid var(--n4)">
+        <span class="oi">⚡</span><div class="on" style="color:var(--n4)">Índices</div>
+        <div class="od">Como índice de libro. Aceleran la velocidad de las consultas SELECT.</div>
+        <div class="pill p3" style="margin-top:8px">indexes</div>
+      </div>
+      <div class="ocard fu" style="transition-delay:.35s;border-top:2px solid var(--n5)">
+        <span class="oi">📦</span><div class="on" style="color:var(--n5)">Stored Procs</div>
+        <div class="od">Programas T-SQL guardados en la BD. Se ejecutan por nombre.</div>
+        <div class="pill p4" style="margin-top:8px">procedures</div>
+      </div>
+      <div class="ocard fu" style="transition-delay:.4s;border-top:2px solid var(--n2)">
+        <span class="oi">⚡</span><div class="on" style="color:#a78bfa">Triggers</div>
+        <div class="od">Se ejecutan automáticamente en INSERT, UPDATE o DELETE.</div>
+        <div class="pill" style="background:rgba(124,58,237,.15);color:#a78bfa;border:1px solid rgba(124,58,237,.3);margin-top:8px">triggers</div>
+      </div>
+      <div class="ocard fu" style="transition-delay:.45s;border-top:2px solid var(--n6)">
+        <span class="oi">🔧</span><div class="on" style="color:var(--n6)">Funciones</div>
+        <div class="od">Funciones T-SQL personalizadas para ampliar el lenguaje SQL.</div>
+        <div class="pill p5" style="margin-top:8px">functions</div>
+      </div>
+      <div class="ocard fu" style="transition-delay:.5s;border-top:2px solid var(--n1)">
+        <span class="oi">📈</span><div class="on" style="color:var(--n1)">Estadísticas</div>
+        <div class="od">Distribución estadística de columnas. Mejoran la eficiencia de índices.</div>
+        <div class="pill p1" style="margin-top:8px">statistics</div>
+      </div>
+      <div class="ocard fu" style="transition-delay:.55s;border-top:2px solid var(--n3)">
+        <span class="oi">🏷️</span><div class="on" style="color:var(--n3)">Sinónimos</div>
+        <div class="od">Nombre alternativo para objetos. Simplifican referencias largas y complejas.</div>
+        <div class="pill p2" style="margin-top:8px">synonyms</div>
+      </div>
+    </div>
+    <div class="two" style="margin-top:16px">
+      <div class="gcard fu" style="transition-delay:.6s">
+        <h3 class="ct">🔒 RESTRICCIONES (Constraints)</h3>
+        <p class="bt" style="font-size:12.5px">Mecanismos en el servidor para controlar la <strong>integridad de los datos</strong>:</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+          <span class="pill p1">PRIMARY KEY</span>
+          <span class="pill p2">FOREIGN KEY</span>
+          <span class="pill p3">UNIQUE</span>
+          <span class="pill p4">DEFAULT</span>
+          <span class="pill p5">CHECK</span>
+        </div>
+      </div>
+      <div class="gcard fu" style="transition-delay:.65s">
+        <h3 class="ct">👤 USUARIOS Y TIPOS DEFINIDOS</h3>
+        <p class="bt" style="font-size:12.5px"><strong>Usuarios:</strong> registran permisos de quienes acceden. Una cuenta obtiene sus permisos a través del usuario de la BD.</p>
+        <p class="bt" style="font-size:12.5px;margin-top:8px"><strong>User-defined data types:</strong> tipos de datos con nombre propio creados en base a los estándar de SQL Server. Estandarizan la creación de tablas.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 4: BD SISTEMA ══ -->
+<section id="s4">
+  <div class="sn">04</div>
+  <div style="max-width:1100px;width:100%">
+    <div class="lbl fu">// NIVEL 02 · SISTEMA</div>
+    <h2 class="st fu" style="transition-delay:.1s">BASES DE DATOS<br>DEL SISTEMA</h2>
+    <p class="bt fu" style="transition-delay:.2s;max-width:600px;margin-top:8px">Al instalar SQL Server se crean automáticamente <span class="glow-c"><strong>4 bases de datos del sistema</strong></span>. Contienen la metadata necesaria para operar y administrar el servidor.</p>
+    <div class="sysdb-grid" style="margin-top:22px">
+      <div class="sdb s1 fu" style="transition-delay:.3s">
+        <span class="si">🏰</span>
+        <div class="sn2">master</div>
+        <p class="bt" style="font-size:12.5px">La <strong>BD principal del sistema</strong>. Controla usuarios y operaciones del servidor: cuentas, variables de entorno y mensajes de error. <span class="glow-c">Sin ella, SQL Server no puede arrancar.</span></p>
+      </div>
+      <div class="sdb s2 fu" style="transition-delay:.38s">
+        <span class="si">📐</span>
+        <div class="sn2">model</div>
+        <p class="bt" style="font-size:12.5px">Plantilla o <strong>molde para nuevas BD</strong>. Cuando se crea una BD, todo el contenido de model se copia en la nueva. Permite personalizar el proceso de creación.</p>
+      </div>
+      <div class="sdb s3 fu" style="transition-delay:.46s">
+        <span class="si">📅</span>
+        <div class="sn2">msdb</div>
+        <p class="bt" style="font-size:12.5px">Utilizada por el <strong>SQL Server Agent</strong> para programar alertas y trabajos, y para registrar operadores. Gestiona tareas automatizadas del sistema.</p>
+      </div>
+      <div class="sdb s4 fu" style="transition-delay:.54s">
+        <span class="si">⚡</span>
+        <div class="sn2">tempdb</div>
+        <p class="bt" style="font-size:12.5px">Para <strong>almacenamiento temporal</strong>. Se recrea cada vez que se inicia SQL Server. Guarda tablas temporales, variables de tabla y resultados intermedios.</p>
+      </div>
+    </div>
+    <div class="gcard fu" style="transition-delay:.62s;margin-top:16px">
+      <h3 class="ct">📊 BD DE USUARIO VS BD DE SISTEMA</h3>
+      <div class="two" style="margin-top:10px;gap:14px">
+        <div style="background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);padding:14px">
+          <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--n1);margin-bottom:8px">⚙️ BD SISTEMA</div>
+          <p class="bt" style="font-size:12px">Creadas automáticamente. Contienen tablas de sistema con metadata para operar y administrar el servidor. No se deben modificar manualmente.</p>
+        </div>
+        <div style="background:rgba(0,255,136,.05);border:1px solid rgba(0,255,136,.15);padding:14px">
+          <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--n3);margin-bottom:8px">👤 BD USUARIO</div>
+          <p class="bt" style="font-size:12px">Las que <strong>nosotros creamos</strong>. Almacenan nuestros datos. También contienen tablas de sistema propias con metadata de nuestra BD.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 5: CREAR BD ══ -->
+<section id="s5">
+  <div class="sn">05</div>
+  <div style="max-width:1100px;width:100%">
+    <div class="lbl fu">// NIVEL 03 · CREACIÓN</div>
+    <h2 class="st fu" style="transition-delay:.1s">CREAR UNA<br>BASE DE DATOS</h2>
+    <!-- Files visual -->
+    <p class="bt fu" style="transition-delay:.2s;max-width:640px;margin-top:8px">Una BD en SQL Server está formada por mínimo <span class="glow-o"><strong>2 archivos físicos</strong></span>. Pueden existir archivos adicionales secundarios y de log.</p>
+    <div class="file-vis fu" style="transition-delay:.3s">
+      <div class="fcard c1">
+        <span class="fci">💾</span>
+        <div class="fcn">PRIMARIO</div>
+        <div class="fce">.mdf</div>
+        <div class="fcd">Archivo principal. Almacena tablas del sistema y puede almacenar tablas de usuario. <strong>Obligatorio</strong>, solo uno por BD.</div>
+      </div>
+      <div class="fcard c2">
+        <span class="fci">📂</span>
+        <div class="fcn">SECUNDARIO</div>
+        <div class="fce">.ndf</div>
+        <div class="fcd">Archivos adicionales para tablas de usuario. Útil cuando la BD es muy grande. Pueden estar en discos diferentes para mejor rendimiento.</div>
+      </div>
+      <div class="fcard c3">
+        <span class="fci">📜</span>
+        <div class="fcn">TRANSACTION LOG</div>
+        <div class="fce">.ldf</div>
+        <div class="fcd">Registra todas las transacciones. Mecanismo de seguridad para recuperar la BD ante fallos. <strong>Al menos uno por BD</strong>.</div>
+      </div>
+    </div>
+    <!-- CREATE DATABASE syntax -->
+    <div class="two" style="margin-top:16px">
+      <div class="fu" style="transition-delay:.4s">
+        <h3 class="ct" style="margin-bottom:10px">⌨️ SINTAXIS CREATE DATABASE</h3>
+        <div class="sql"><span class="kw">CREATE DATABASE</span> nombre_basedatos<br>
+<span class="kw">ON</span> [<span class="kw">PRIMARY</span>] (<br>
+  &nbsp;&nbsp;<span class="fn">NAME</span> = nombre_lógico_data ,<br>
+  &nbsp;&nbsp;<span class="fn">FILENAME</span> = <span class="str">'ruta\archivo.mdf'</span> ,<br>
+  &nbsp;&nbsp;<span class="fn">SIZE</span> = <span class="nm">8MB</span> ,<br>
+  &nbsp;&nbsp;<span class="fn">MAXSIZE</span> = <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">15MB</span> ,<br>
+  &nbsp;&nbsp;<span class="fn">FILEGROWTH</span> = <span class="nm">1MB</span> )<br>
+<span class="kw">LOG ON</span> (<br>
+  &nbsp;&nbsp;<span class="fn">NAME</span> = nombre_lógico_log ,<br>
+  &nbsp;&nbsp;<span class="fn">FILENAME</span> = <span class="str">'ruta\archivo.ldf'</span> ,<br>
+  &nbsp;&nbsp;<span class="fn">SIZE</span> = <span class="nm">3MB</span> ,<br>
+  &nbsp;&nbsp;<span class="fn">MAXSIZE</span> = <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">8MB</span> ,<br>
+  &nbsp;&nbsp;<span class="fn">FILEGROWTH</span> = <span class="nm">10%</span> )<br>
+<span class="kw">GO</span></div>
+        <div class="hl" style="margin-top:10px;font-size:12px">
+          <strong>Ejercicio 2.1:</strong> Crear con propiedades predeterminadas:<br>
+          <code style="color:var(--n1);font-family:'Share Tech Mono',monospace">CREATE DATABASE DBPrueba1 · GO</code><br>
+          Luego verificar en el <strong>Explorador de objetos → Bases de datos → DBPrueba1</strong>
+        </div>
+      </div>
+      <div class="fu" style="transition-delay:.5s">
+        <h3 class="ct" style="margin-bottom:10px">📋 PARÁMETROS CLAVE</h3>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div class="cfg-row"><div class="cfg-key">NAME</div><div class="cfg-val">Nombre lógico usado en sentencias SQL</div></div>
+          <div class="cfg-row"><div class="cfg-key">FILENAME</div><div class="cfg-val">Ruta completa y nombre del archivo físico</div></div>
+          <div class="cfg-row"><div class="cfg-key">SIZE</div><div class="cfg-val">Tamaño inicial del archivo</div></div>
+          <div class="cfg-row"><div class="cfg-key">MAXSIZE</div><div class="cfg-val">Tamaño máximo (o UNLIMITED)</div></div>
+          <div class="cfg-row"><div class="cfg-key">FILEGROWTH</div><div class="cfg-val">Incremento cuando necesita más espacio (KB/MB/%)</div></div>
+          <div class="cfg-row"><div class="cfg-key">ON PRIMARY</div><div class="cfg-val">Propiedades del archivo primario (.mdf)</div></div>
+          <div class="cfg-row"><div class="cfg-key">LOG ON</div><div class="cfg-val">Propiedades del archivo de log (.ldf)</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 6: TRANSACCIONES ══ -->
+<section id="s6">
+  <div class="sn">06</div>
+  <div style="max-width:1100px;width:100%">
+    <div class="lbl fu">// NIVEL 03B · TRANSACCIONES</div>
+    <h2 class="st fu" style="transition-delay:.1s">TRANSACCIONES<br>Y LOG</h2>
+    <div class="two" style="margin-top:22px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="gcard fr" style="transition-delay:.2s">
+          <h3 class="ct">🔄 ¿QUÉ ES UNA TRANSACCIÓN?</h3>
+          <p class="bt">Un conjunto de operaciones de modificación de datos que se ejecutan <strong>como una sola unidad</strong>. Si una operación falla, <span class="glow-r"><strong>toda la transacción se anula</strong></span> (rollback).</p>
+          <div class="hl hl2" style="margin-top:10px;font-size:12px">Garantiza que las operaciones se llevarán a cabo <strong>completas o no se realiza ninguna</strong>, protegiendo la consistencia de los datos.</div>
+        </div>
+        <div class="gcard fr" style="transition-delay:.3s">
+          <h3 class="ct">📜 REGISTRO DE TRANSACCIONES</h3>
+          <p class="bt" style="font-size:12.5px">El archivo <span class="glow-o"><strong>.ldf</strong></span> registra todas las operaciones INSERT, UPDATE y DELETE. El proceso:</p>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+            <div style="display:flex;gap:10px;align-items:center;font-size:12px;color:var(--text2)">
+              <span style="color:var(--n1);font-weight:700">①</span> Aplicación envía modificación al servidor SQL
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;font-size:12px;color:var(--text2)">
+              <span style="color:var(--n1);font-weight:700">②</span> Páginas afectadas localizadas en el caché
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;font-size:12px;color:var(--text2)">
+              <span style="color:var(--n1);font-weight:700">③</span> Modificación registrada en el transaction log
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;font-size:12px;color:var(--text2)">
+              <span style="color:var(--n3);font-weight:700">④</span> Checkpoint guarda transacciones confirmadas en BD
+            </div>
+          </div>
+          <div class="hl hl3" style="margin-top:10px;font-size:12px">Si el sistema falla, la recuperación automática usa el log para restaurar todas las transacciones confirmadas y anular las incompletas.</div>
+        </div>
+      </div>
+      <!-- Transaction example -->
+      <div class="gcard fr" style="transition-delay:.4s">
+        <h3 class="ct">🎮 EJEMPLO DE TRANSACCIÓN</h3>
+        <p class="bt" style="font-size:12px;margin-bottom:12px">Registrar la venta de 10 unidades del producto ABC (tablas: <strong>Factura, Detalle_factura, Producto</strong>):</p>
+        <div class="tx-flow">
+          <div class="tx-op ok">
+            <div class="tx-num">1</div>
+            <div class="tx-txt">Registra en <strong>Factura</strong> la cabecera de la venta</div>
+            <div class="tx-badge">✓ OK</div>
+          </div>
+          <div class="tx-op ok">
+            <div class="tx-num">2</div>
+            <div class="tx-txt">Registra en <strong>Detalle_factura</strong> los detalles</div>
+            <div class="tx-badge">✓ OK</div>
+          </div>
+          <div class="tx-op fail">
+            <div class="tx-num">3</div>
+            <div class="tx-txt">Actualiza <strong>Producto</strong> reduciendo el stock → <strong>FALLA</strong></div>
+            <div class="tx-badge">✗ FAIL</div>
+          </div>
+          <div class="tx-op roll">
+            <div class="tx-num">↩</div>
+            <div class="tx-txt"><strong>ROLLBACK</strong>: se anulan las operaciones 1 y 2</div>
+            <div class="tx-badge">⚠ ROLLBACK</div>
+          </div>
+        </div>
+        <div class="hl" style="margin-top:12px;font-size:12px">Sin transacciones: Factura y Detalle_factura quedarían registrados pero el stock <strong>no se actualizaría</strong> → inconsistencia de datos.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 7: CONFIGURACIÓN ══ -->
+<section id="s7">
+  <div class="sn">07</div>
+  <div style="max-width:1100px;width:100%">
+    <div class="lbl fu">// NIVEL 04 · CONFIGURACIÓN</div>
+    <h2 class="st fu" style="transition-delay:.1s">PROPIEDADES Y<br>CONFIGURACIÓN</h2>
+    <div class="two" style="margin-top:22px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="gcard fr" style="transition-delay:.2s">
+          <h3 class="ct">🔍 sp_helpdb — VER PROPIEDADES</h3>
+          <p class="bt" style="font-size:12.5px">Procedimiento del sistema que entrega información de todas las BD del servidor o de una específica.</p>
+          <div class="sql"><span class="cm">-- Todas las BD del servidor:</span>
+<span class="kw">EXEC</span> sp_helpdb
+<span class="kw">GO</span>
+
+<span class="cm">-- Una BD específica:</span>
+<span class="kw">EXEC</span> sp_helpdb DBPrueba1
+<span class="kw">GO</span>
+
+<span class="cm">-- Verificar propiedad específica:</span>
+<span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(
+  <span class="str">'DBPrueba1'</span>, <span class="str">'UserAccess'</span>)
+<span class="kw">GO</span></div>
+        </div>
+        <div class="gcard fr" style="transition-delay:.3s">
+          <h3 class="ct">⚙️ ALTER DATABASE — CONFIGURAR</h3>
+          <p class="bt" style="font-size:12.5px">Permite modificar la configuración de una BD existente. Ejemplo — configurar como monousuaria:</p>
+          <div class="sql"><span class="kw">ALTER DATABASE</span> DBPrueba1
+<span class="kw">SET</span> <span class="nm">single_user</span>
+<span class="kw">GO</span></div>
+        </div>
+      </div>
+      <div class="gcard fr" style="transition-delay:.4s">
+        <h3 class="ct">📋 OPCIONES DE CONFIGURACIÓN</h3>
+        <table class="mtable">
+          <thead><tr><th>Opción</th><th>Descripción</th></tr></thead>
+          <tbody>
+            <tr><td>autoclose</td><td style="color:var(--text2)">Cierra la BD y libera recursos cuando el último usuario se desconecta.</td></tr>
+            <tr><td>autoshrink</td><td style="color:var(--text2)">Los archivos reducen su tamaño automáticamente de forma periódica.</td></tr>
+            <tr><td>concat null<br>yields null</td><td style="color:var(--text2)">Si un operando de concatenación es NULL, el resultado es NULL.</td></tr>
+            <tr><td>dbo use only</td><td style="color:var(--text2)">Solo el dueño (dbo) de la BD puede utilizarla.</td></tr>
+            <tr><td>offline</td><td style="color:var(--text2)">BD fuera de línea (on = no disponible, off = en línea).</td></tr>
+            <tr><td>read only</td><td style="color:var(--text2)">BD de solo lectura. No se permiten cambios en ella.</td></tr>
+            <tr><td>single user</td><td style="color:var(--text2)">Solo un usuario a la vez puede acceder a la BD.</td></tr>
+          </tbody>
+        </table>
+        <div class="hl" style="margin-top:12px;font-size:12px">La configuración por defecto se toma de la BD de sistema <span class="glow-c"><strong>model</strong></span>. Salvo que se especifique en CREATE DATABASE, las nuevas BD heredan sus propiedades.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 8: ACTIVIDADES ══ -->
+<section id="s8">
+  <div class="sn">08</div>
+  <div style="max-width:1100px;width:100%">
+    <div class="lbl fu">// BOSS LEVEL · MISIONES</div>
+    <h2 class="st fu" style="transition-delay:.1s">ACTIVIDADES<br>RESUELTAS</h2>
+    <p class="bt fu" style="transition-delay:.2s;max-width:640px;margin-top:8px">20 preguntas teóricas y prácticas del Capítulo II resueltas con detalle técnico.</p>
+
+    <!-- TEÓRICAS -->
+    <div class="act-wrap fu" style="transition-delay:.3s;margin-top:22px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+        <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--n1);font-weight:700">◈ PREGUNTAS TEÓRICAS</div>
+        <div class="pill p1">10 MISIONES</div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum">1</span>En control académico, ¿por qué es crítico definir correctamente claves primarias y foráneas en estudiantes, cursos y matrículas?</div>
+        <div class="ar">Las <strong>claves primarias (PK)</strong> garantizan que no existan registros duplicados de un estudiante o curso. Las <strong>claves foráneas (FK)</strong> aseguran integridad referencial: una matrícula no puede existir sin un estudiante válido ni un curso válido. Sin esta correcta definición, se producirían inconsistencias como matrículas huérfanas (sin estudiante o sin curso), duplicaciones de datos y reportes de calificaciones incorrectos, comprometiendo la confiabilidad del sistema académico completo.</div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum">2</span>¿Stored procedures o funciones definidas por el usuario para centralizar reglas de negocio? ¿Qué criterios considerar?</div>
+        <div class="ar">Los <strong>stored procedures</strong> son más adecuados para operaciones con múltiples pasos (INSERT, UPDATE, DELETE, control de transacciones) y lógica de negocio compleja. Las <strong>funciones</strong> son ideales para cálculos reutilizables dentro de consultas SELECT. Criterios: (1) Si se necesita retornar un valor único y usarlo en SELECT → función. (2) Si implica múltiples operaciones DML o manejo de errores → stored procedure. (3) Para auditorías y control transaccional → stored procedure.</div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum">3</span>En e-commerce, ¿qué rol cumplen los índices y estadísticas al manejar búsquedas de productos?</div>
+        <div class="ar">Los <strong>índices</strong> aceleran las búsquedas de productos evitando escaneos completos de tabla (como buscar en el índice de un libro en vez de leer página por página). Para un e-commerce con millones de productos, un índice en columnas como <strong>nombre_producto, categoria o precio</strong> reduce el tiempo de consulta de segundos a milisegundos. Las <strong>estadísticas</strong> informan al optimizador de SQL Server sobre la distribución de valores, permitiéndole elegir el plan de ejecución más eficiente para cada búsqueda.</div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum">4</span>¿Qué ventajas tendría usar vistas en un sistema financiero con información sensible?</div>
+        <div class="ar">Las <strong>vistas</strong> permiten: (1) <strong>Seguridad</strong>: ocultar columnas sensibles (salarios, cuentas bancarias) mostrando solo las permitidas a cada usuario. (2) <strong>Simplificación</strong>: encapsular joins complejos entre tablas financieras en una consulta simple. (3) <strong>Abstracción</strong>: los usuarios consultan la vista sin conocer la estructura física de las tablas subyacentes. (4) <strong>Control de acceso</strong>: se otorgan permisos de SELECT sobre la vista, no sobre las tablas directamente.</div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum">5</span>Si el archivo de transaction log se llena constantemente en una BD de ventas, ¿qué consecuencias tendría para la consistencia?</div>
+        <div class="ar">Si el <strong>transaction log (.ldf)</strong> se llena: (1) SQL Server <strong>detiene todas las operaciones</strong> de escritura (INSERT, UPDATE, DELETE) hasta que haya espacio. (2) Los registros de ventas pendientes no se pueden completar, generando errores en la aplicación. (3) En caso de fallo durante este estado, las transacciones incompletas no podrían registrarse correctamente. <strong>Solución</strong>: configurar FILEGROWTH adecuado, realizar backups de log regularmente con BACKUP LOG, y monitorear el crecimiento del archivo.</div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum">6</span>¿Qué impacto tendría habilitar autoshrink en una BD de producción?</div>
+        <div class="ar">Habilitar <strong>autoshrink en producción</strong> es generalmente <strong>perjudicial</strong>: (1) SQL Server comprime automáticamente los archivos de BD cuando no se usan al 100%, liberando espacio. (2) Sin embargo, esto fragmenta los índices, degradando el rendimiento de las consultas. (3) Si la BD crece de nuevo, SQL Server debe reasignar espacio, generando operaciones costosas. (4) Produce ciclos de shrink-grow que consumen CPU y E/S. <strong>Recomendación</strong>: mantener autoshrink en false y gestionar el espacio manualmente con DBCC SHRINKFILE.</div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum">7</span>En un sistema hospitalario, ¿qué pasaría si no se aplican restricciones CHECK en la tabla de pacientes para validar que la edad sea positiva?</div>
+        <div class="ar">Sin restricción <strong>CHECK (edad > 0)</strong>: (1) Se podrían registrar pacientes con edades negativas o cero, generando datos inválidos. (2) Los reportes estadísticos (promedio de edad, distribución etaria) serían incorrectos. (3) Los sistemas de alerta por rango de edad (ej: vacunas pediátricas) fallarían. (4) Auditorías de calidad de datos detectarían inconsistencias. La restricción CHECK actúa como validación a nivel de BD, independientemente de la aplicación que inserte los datos.</div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum">8</span>¿Por qué la BD model es fundamental al crear nuevas bases de datos en un proyecto empresarial?</div>
+        <div class="ar">La BD <strong>model</strong> actúa como plantilla: toda nueva BD hereda automáticamente su contenido y configuración. En un proyecto empresarial, esto permite: (1) <strong>Estandarización</strong>: incluir en model tablas de auditoría, usuarios estándar o configuraciones comunes que toda BD empresarial debe tener. (2) <strong>Consistencia</strong>: todas las BD del proyecto tendrán las mismas opciones de configuración (collation, recovery model, etc.). (3) <strong>Eficiencia</strong>: no hay que configurar manualmente cada nueva BD desde cero.</div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum">9</span>¿Cómo afectaría un mal diseño de transacciones en una aplicación bancaria al ejecutar transferencias entre cuentas?</div>
+        <div class="ar">Una transferencia involucra: débito en cuenta origen + crédito en cuenta destino. Sin correctas transacciones: (1) Si el débito se ejecuta pero el crédito falla, el dinero <strong>desaparece del sistema</strong>. (2) Múltiples usuarios ejecutando transferencias simultáneas sin control transaccional producirían <strong>condiciones de carrera</strong> (race conditions) con saldos incorrectos. (3) Un rollback parcial dejaría la BD en estado inconsistente. Con transacciones ACID correctas, ambas operaciones se ejecutan juntas o ninguna, garantizando que el dinero total en el sistema permanezca constante.</div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum">10</span>¿Qué riesgos implica configurar una BD crítica en single_user durante la implementación de un ERP?</div>
+        <div class="ar">Configurar en <strong>single_user</strong> durante la implementación de un ERP implica: (1) Solo un usuario puede conectarse a la vez — si el DBA ocupa la conexión, el equipo de implementación no puede acceder. (2) Si la implementación del ERP requiere múltiples conexiones simultáneas (procesos de migración, validación, pruebas paralelas), se bloqueará. (3) En producción, los usuarios finales no podrán acceder durante el tiempo que dure la operación de mantenimiento. <strong>Alternativa recomendada</strong>: usar RESTRICTED_USER que permite solo administradores y propietarios, o planificar ventanas de mantenimiento.</div>
+      </div>
+    </div>
+
+    <!-- PRÁCTICAS -->
+    <div class="act-wrap fu" style="transition-delay:.5s;margin-top:18px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+        <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--n3);font-weight:700">◈ PREGUNTAS PRÁCTICAS</div>
+        <div class="pill p2">10 MISIONES</div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">1</span>Proyecto inventario: crear BD AlmacenDB con archivo primario 20MB, log 10MB, crecimiento 10%.</div>
+        <div class="ar">
+<div class="sql" style="margin-top:0"><span class="kw">USE</span> master
+<span class="kw">GO</span>
+<span class="kw">CREATE DATABASE</span> AlmacenDB
+<span class="kw">ON PRIMARY</span> (
+  <span class="fn">NAME</span> = <span class="str">'AlmacenDB_data'</span>,
+  <span class="fn">FILENAME</span> = <span class="str">'D:\SQLServer2022\Data\AlmacenDB.mdf'</span>,
+  <span class="fn">SIZE</span> = <span class="nm">20MB</span>,
+  <span class="fn">MAXSIZE</span> = <span class="nm">UNLIMITED</span>,
+  <span class="fn">FILEGROWTH</span> = <span class="nm">10%</span>
+)
+<span class="kw">LOG ON</span> (
+  <span class="fn">NAME</span> = <span class="str">'AlmacenDB_log'</span>,
+  <span class="fn">FILENAME</span> = <span class="str">'D:\SQLServer2022\Data\AlmacenDB.ldf'</span>,
+  <span class="fn">SIZE</span> = <span class="nm">10MB</span>,
+  <span class="fn">MAXSIZE</span> = <span class="nm">UNLIMITED</span>,
+  <span class="fn">FILEGROWTH</span> = <span class="nm">10%</span>
+)
+<span class="kw">GO</span></div>
+        </div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">2</span>FacturacionDB que solo permita consultas de lectura. ¿Qué instrucción usarías?</div>
+        <div class="ar">
+<div class="sql" style="margin-top:0"><span class="kw">ALTER DATABASE</span> FacturacionDB
+<span class="kw">SET</span> <span class="nm">read_only</span>
+<span class="kw">GO</span>
+<span class="cm">-- Verificar el estado:</span>
+<span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<span class="str">'FacturacionDB'</span>, <span class="str">'Updateability'</span>)
+<span class="kw">GO</span>
+<span class="cm">-- Resultado esperado: READ_ONLY</span></div>
+        </div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">3</span>¿Qué consulta ejecutarías para verificar qué bases de datos existen en el servidor y sus propiedades?</div>
+        <div class="ar">
+<div class="sql" style="margin-top:0"><span class="cm">-- Ver todas las BD con sp_helpdb:</span>
+<span class="kw">EXEC</span> sp_helpdb
+<span class="kw">GO</span>
+<span class="cm">-- Ver desde tabla del sistema:</span>
+<span class="kw">SELECT</span> name, database_id, create_date,
+       compatibility_level, state_desc
+<span class="kw">FROM</span> sys.databases
+<span class="kw">ORDER BY</span> name
+<span class="kw">GO</span>
+<span class="cm">-- Filtrar BDs de usuario (id > 4):</span>
+<span class="kw">SELECT</span> name <span class="kw">FROM</span> sys.databases
+<span class="kw">WHERE</span> database_id <span class="nm">&gt; 4</span>
+<span class="kw">GO</span></div>
+        </div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">4</span>BD RRHHDB que permita únicamente un usuario a la vez. ¿Cómo configurarías esto?</div>
+        <div class="ar">
+<div class="sql" style="margin-top:0"><span class="kw">ALTER DATABASE</span> RRHHDB
+<span class="kw">SET</span> <span class="nm">single_user</span>
+<span class="nm">WITH ROLLBACK IMMEDIATE</span>
+<span class="kw">GO</span>
+<span class="cm">-- Verificar la configuración:</span>
+<span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<span class="str">'RRHHDB'</span>, <span class="str">'UserAccess'</span>)
+<span class="kw">GO</span>
+<span class="cm">-- Para restaurar acceso múltiple:</span>
+<span class="kw">ALTER DATABASE</span> RRHHDB <span class="kw">SET</span> <span class="nm">multi_user</span>
+<span class="kw">GO</span></div>
+        </div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">5</span>Diseña una transacción que registre una venta en Factura, DetalleFactura y actualice el Stock de productos.</div>
+        <div class="ar">
+<div class="sql" style="margin-top:0"><span class="kw">BEGIN TRANSACTION</span>
+  <span class="kw">BEGIN TRY</span>
+    <span class="cm">-- Operación 1: Cabecera de la factura</span>
+    <span class="kw">INSERT INTO</span> Factura (idFactura, fecha, idCliente)
+    <span class="kw">VALUES</span> (<span class="nm">1001</span>, <span class="fn">GETDATE</span>(), <span class="nm">5</span>)
+    <span class="cm">-- Operación 2: Detalle de la venta</span>
+    <span class="kw">INSERT INTO</span> DetalleFactura (idFactura, idProducto, cantidad)
+    <span class="kw">VALUES</span> (<span class="nm">1001</span>, <span class="nm">42</span>, <span class="nm">10</span>)
+    <span class="cm">-- Operación 3: Actualizar stock</span>
+    <span class="kw">UPDATE</span> Producto <span class="kw">SET</span> stock = stock - <span class="nm">10</span>
+    <span class="kw">WHERE</span> idProducto = <span class="nm">42</span>
+    <span class="kw">COMMIT TRANSACTION</span>
+  <span class="kw">END TRY</span>
+  <span class="kw">BEGIN CATCH</span>
+    <span class="kw">ROLLBACK TRANSACTION</span>
+    <span class="kw">PRINT</span> <span class="str">'Error: transacción revertida'</span>
+  <span class="kw">END CATCH</span>
+<span class="kw">GO</span></div>
+        </div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">6</span>En un ERP, crear un sinónimo para acceder a la tabla Clientes de VentasDB desde otra BD.</div>
+        <div class="ar">
+<div class="sql" style="margin-top:0"><span class="cm">-- Conectado a la BD de destino (ej: InventarioDBs):</span>
+<span class="kw">USE</span> InventarioDB
+<span class="kw">GO</span>
+<span class="cm">-- Crear sinónimo que apunta a Clientes en VentasDB:</span>
+<span class="kw">CREATE SYNONYM</span> ClientesVentas
+<span class="kw">FOR</span> VentasDB.dbo.Clientes
+<span class="kw">GO</span>
+<span class="cm">-- Ahora se puede usar el sinónimo directamente:</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> ClientesVentas
+<span class="kw">WHERE</span> ciudad = <span class="str">'Lima'</span>
+<span class="kw">GO</span></div>
+        </div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">7</span>Sistema académico: validar que la nota de un estudiante esté entre 0 y 20. ¿Qué restricción aplicarías?</div>
+        <div class="ar">
+<div class="sql" style="margin-top:0"><span class="cm">-- Al crear la tabla:</span>
+<span class="kw">CREATE TABLE</span> Notas (
+  idNota    <span class="nm">INT</span> <span class="kw">PRIMARY KEY</span>,
+  idAlumno  <span class="nm">INT</span> <span class="kw">NOT NULL</span>,
+  idCurso   <span class="nm">INT</span> <span class="kw">NOT NULL</span>,
+  nota      <span class="nm">DECIMAL(4,2)</span> <span class="kw">NOT NULL</span>,
+  <span class="kw">CONSTRAINT</span> CK_Nota_Rango
+    <span class="kw">CHECK</span> (nota <span class="kw">BETWEEN</span> <span class="nm">0</span> <span class="kw">AND</span> <span class="nm">20</span>)
+)
+<span class="kw">GO</span>
+<span class="cm">-- O agregar a tabla existente:</span>
+<span class="kw">ALTER TABLE</span> Notas
+<span class="kw">ADD CONSTRAINT</span> CK_Nota_Rango
+  <span class="kw">CHECK</span> (nota <span class="kw">BETWEEN</span> <span class="nm">0</span> <span class="kw">AND</span> <span class="nm">20</span>)
+<span class="kw">GO</span></div>
+        </div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">8</span>Almacenar documentos PDF dentro de SQL Server. ¿Qué tipo de dato usarías y cómo lo declararías?</div>
+        <div class="ar">Para almacenar archivos binarios como PDFs se usa el tipo <strong>VARBINARY(MAX)</strong> (hasta 2 GB) o <strong>FILESTREAM</strong> para archivos grandes:<div class="sql" style="margin-top:8px"><span class="kw">CREATE TABLE</span> Documentos (
+  idDocumento  <span class="nm">INT</span> <span class="kw">PRIMARY KEY</span>,
+  nombre       <span class="nm">VARCHAR(200)</span> <span class="kw">NOT NULL</span>,
+  tipo         <span class="nm">VARCHAR(50)</span>,
+  <span class="cm">-- Para PDFs hasta 2GB:</span>
+  contenido    <span class="nm">VARBINARY(MAX)</span>,
+  fechaSubida  <span class="nm">DATETIME</span> <span class="kw">DEFAULT</span> <span class="fn">GETDATE</span>()
+)
+<span class="kw">GO</span></div></div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">9</span>Logística: crear una vista que muestre productos con stock menor a 10 unidades.</div>
+        <div class="ar">
+<div class="sql" style="margin-top:0"><span class="kw">CREATE VIEW</span> vw_StockCritico
+<span class="kw">AS</span>
+  <span class="kw">SELECT</span>
+    p.idProducto,
+    p.nombre,
+    p.stock,
+    c.nombre <span class="kw">AS</span> categoria
+  <span class="kw">FROM</span> Producto p
+  <span class="kw">INNER JOIN</span> Categoria c
+    <span class="kw">ON</span> p.idCategoria = c.idCategoria
+  <span class="kw">WHERE</span> p.stock <span class="nm">&lt; 10</span>
+<span class="kw">GO</span>
+<span class="cm">-- Usar la vista:</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> vw_StockCritico
+<span class="kw">ORDER BY</span> stock <span class="kw">ASC</span>
+<span class="kw">GO</span></div>
+        </div>
+      </div>
+
+      <div class="aitem">
+        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">10</span>¿Cómo recuperarías el acceso a la BD ProyectoDB que quedó en estado de solo lectura?</div>
+        <div class="ar">
+<div class="sql" style="margin-top:0"><span class="cm">-- Paso 1: Conectarse como administrador (sysadmin)</span>
+<span class="kw">USE</span> master
+<span class="kw">GO</span>
+<span class="cm">-- Paso 2: Verificar el estado actual</span>
+<span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<span class="str">'ProyectoDB'</span>, <span class="str">'Updateability'</span>)
+<span class="kw">GO</span>
+<span class="cm">-- Paso 3: Restaurar acceso de lectura/escritura</span>
+<span class="kw">ALTER DATABASE</span> ProyectoDB
+<span class="kw">SET</span> <span class="nm">read_write</span>
+<span class="nm">WITH ROLLBACK IMMEDIATE</span>
+<span class="kw">GO</span>
+<span class="cm">-- Paso 4: Verificar que el cambio se aplicó</span>
+<span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<span class="str">'ProyectoDB'</span>, <span class="str">'Updateability'</span>)
+<span class="cm">-- Resultado esperado: READ_WRITE</span>
+<span class="kw">GO</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 9: FINAL ══ -->
+<section id="s9">
+  <div class="final">
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--n1);letter-spacing:.3em;margin-bottom:16px;text-shadow:0 0 8px var(--n1)">◈ CAPÍTULO COMPLETADO ◈</div>
+    <h2 class="fu" style="transition-delay:.1s">MISIÓN<br><span>COMPLETADA</span></h2>
+    <p class="fu" style="transition-delay:.2s;font-size:14px;color:var(--text2);line-height:1.75;margin-top:14px">Has dominado las bases de datos en SQL Server 2022: qué son, sus objetos, las BD del sistema, cómo crearlas, las transacciones y la configuración avanzada.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px" class="fu" style="transition-delay:.3s">
+      <div class="stat-box"><div class="stat-val" style="font-size:20px">🗄️</div><div class="stat-lbl">BD DEFINIDA</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--n3);font-size:20px">⚙️</div><div class="stat-lbl">SISTEMA</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--n4);font-size:20px">🔄</div><div class="stat-lbl">TRANSACC.</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--n5);font-size:20px">✅</div><div class="stat-lbl">20 MISIONES</div></div>
+    </div>
+    <div class="cbox fu" style="transition-delay:.4s;margin-top:24px">
+      <p><strong>Player:</strong> Alexandra Milagros Cuchula Daniel</p>
+      <div class="cdiv"></div>
+      <p><strong>Game Master:</strong> Ing. Raúl Fernández Bejarano</p>
+      <div class="cdiv"></div>
+      <p style="font-size:11px;font-family:'Share Tech Mono',monospace;color:var(--n1)">SQL SERVER 2022 · CAP. II · UPLA · 2025</p>
+    </div>
+  </div>
+</section>
+
+</div><!-- /slides -->
+
+<script>
+// STARS
+const canvas=document.getElementById('stars');
+const ctx=canvas.getContext('2d');
+canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+const stars=Array.from({length:180},()=>({
+  x:Math.random()*canvas.width, y:Math.random()*canvas.height,
+  r:Math.random()*1.5+.3, a:Math.random(), da:Math.random()*.008-.004
+}));
+function drawStars(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  stars.forEach(s=>{
+    s.a+=s.da; if(s.a<0||s.a>1)s.da*=-1;
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(120,200,255,${s.a*0.7})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight});
+
+// CURSOR
+const cur=document.getElementById('cur'),crng=document.getElementById('crng');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx-6+'px';cur.style.top=my-6+'px';});
+(function ar(){rx+=(mx-rx)*.13;ry+=(my-ry)*.13;crng.style.left=rx-17+'px';crng.style.top=ry-17+'px';requestAnimationFrame(ar);})();
+document.querySelectorAll('.gcard,.ocard,.fbox,.fcard,.aitem,.nd,.stat-box,.sdb').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.transform='scale(2)';cur.style.background='var(--n3)';crng.style.borderColor='var(--n3)'});
+  el.addEventListener('mouseleave',()=>{cur.style.transform='scale(1)';cur.style.background='var(--n1)';crng.style.borderColor='var(--n1)'});
+});
+
+// SLIDES + DOTS + PROGRESS
+const slides=document.querySelectorAll('section');
+const nd=document.getElementById('nd');
+const pf=document.getElementById('pf');
+const labels=['INICIO','MAPA','¿QUÉ ES BD?','OBJETOS','SISTEMA','CREAR BD','TRANSACC.','CONFIG.','MISIONES','FINAL'];
+slides.forEach((_,i)=>{
+  const d=document.createElement('div');
+  d.className='nd'+(i===0?' active':'');
+  d.title=labels[i]||'';
+  d.onclick=()=>go(i);
+  nd.appendChild(d);
+});
+function go(i){slides[i].scrollIntoView({behavior:'smooth'});}
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const idx=[...slides].indexOf(e.target);
+      document.querySelectorAll('.nd').forEach((d,i)=>d.classList.toggle('active',i===idx));
+      pf.style.width=(idx/(slides.length-1)*100)+'%';
+      e.target.classList.add('vis');
+      e.target.querySelectorAll('.fu,.fr').forEach(el=>setTimeout(()=>el.classList.add('show'),80));
+    }
+  });
+},{threshold:.2});
+slides.forEach(s=>obs.observe(s));
+document.addEventListener('keydown',e=>{
+  const a=[...document.querySelectorAll('.nd')].findIndex(d=>d.classList.contains('active'));
+  if(e.key==='ArrowDown'||e.key==='ArrowRight') go(Math.min(a+1,slides.length-1));
+  if(e.key==='ArrowUp'||e.key==='ArrowLeft') go(Math.max(a-1,0));
+});
+</script>
+</body>
+</html>
