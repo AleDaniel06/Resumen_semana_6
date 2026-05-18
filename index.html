@@ -758,7 +758,6 @@ h3.ct{font-family:'Inter',sans-serif;font-size:14px;font-weight:700;color:var(--
   </div>
 </section>
 
-<!-- ══ 7: CONFIGURACIÓN ══ -->
 <section id="s7">
   <div class="sn">07</div>
   <div style="max-width:1100px;width:100%">
@@ -769,27 +768,29 @@ h3.ct{font-family:'Inter',sans-serif;font-size:14px;font-weight:700;color:var(--
         <div class="gcard fr" style="transition-delay:.2s">
           <h3 class="ct">🔍 sp_helpdb — VER PROPIEDADES</h3>
           <p class="bt" style="font-size:12.5px">Procedimiento del sistema que entrega información de todas las BD del servidor o de una específica.</p>
-<div class="sql">
-  <span class="cm">-- Todas las BD del servidor:</span><br>
-  <span class="kw">EXEC</span> sp_helpdb<br>
-  <span class="kw">GO</span><br>
-  <br>
-  <span class="cm">-- Una BD específica:</span><br>
-  <span class="kw">EXEC</span> sp_helpdb DBPrueba1<br>
-  <span class="kw">GO</span><br>
-  <br>
-  <span class="cm">-- Verificar propiedad específica:</span><br>
-  <span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<br>
-  &nbsp;&nbsp;<span class="str">'DBPrueba1'</span>, <span class="str">'UserAccess'</span>)<br>
-  <span class="kw">GO</span></div>
-</div>
+          <div class="sql">
+            <span class="cm">-- Todas las BD del servidor:</span><br>
+            <span class="kw">EXEC</span> sp_helpdb<br>
+            <span class="kw">GO</span><br>
+            <br>
+            <span class="cm">-- Una BD específica:</span><br>
+            <span class="kw">EXEC</span> sp_helpdb DBPrueba1<br>
+            <span class="kw">GO</span><br>
+            <br>
+            <span class="cm">-- Verificar propiedad específica:</span><br>
+            <span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<br>
+            &nbsp;&nbsp;<span class="str">'DBPrueba1'</span>, <span class="str">'UserAccess'</span>)<br>
+            <span class="kw">GO</span>
+          </div>
+        </div>
         <div class="gcard fr" style="transition-delay:.3s">
           <h3 class="ct">⚙️ ALTER DATABASE — CONFIGURAR</h3>
           <p class="bt" style="font-size:12.5px">Permite modificar la configuración de una BD existente. Ejemplo — configurar como monousuaria:</p>
-<div class="sql">
-  <span class="kw">ALTER DATABASE</span> DBPrueba1<br>
-  <span class="kw">SET</span> <span class="nm">single_user</span><br>
-  <span class="kw">GO</span></div>
+          <div class="sql">
+            <span class="kw">ALTER DATABASE</span> DBPrueba1<br>
+            <span class="kw">SET</span> <span class="nm">single_user</span><br>
+            <span class="kw">GO</span>
+          </div>
         </div>
       </div>
       <div class="gcard fr" style="transition-delay:.4s">
