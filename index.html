@@ -377,7 +377,7 @@ h3.ct{font-family:'Inter',sans-serif;font-size:14px;font-weight:700;color:var(--
       <div><span style="display:block;color:var(--muted);font-size:9px;font-family:'Share Tech Mono',monospace;margin-bottom:3px;letter-spacing:.15em">MASTER</span>
       <span style="font-size:13px;font-weight:600">Ing. Raúl Fernández Bejarano</span></div>
       <div><span style="display:block;color:var(--muted);font-size:9px;font-family:'Share Tech Mono',monospace;margin-bottom:3px;letter-spacing:.15em">SEASON</span>
-      <span style="font-size:13px;font-weight:600">UPLA · 2025</span></div>
+      <span style="font-size:13px;font-weight:600">UPLA · 2026</span></div>
     </div>
   </div>
   <div class="scta" onclick="go(1)">
@@ -769,25 +769,28 @@ h3.ct{font-family:'Inter',sans-serif;font-size:14px;font-weight:700;color:var(--
         <div class="gcard fr" style="transition-delay:.2s">
           <h3 class="ct">🔍 sp_helpdb — VER PROPIEDADES</h3>
           <p class="bt" style="font-size:12.5px">Procedimiento del sistema que entrega información de todas las BD del servidor o de una específica.</p>
-          <div class="sql"><span class="cm">-- Todas las BD del servidor:</span>
-<span class="kw">EXEC</span> sp_helpdb
-<span class="kw">GO</span>
-
-<span class="cm">-- Una BD específica:</span>
-<span class="kw">EXEC</span> sp_helpdb DBPrueba1
-<span class="kw">GO</span>
-
-<span class="cm">-- Verificar propiedad específica:</span>
-<span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(
-  <span class="str">'DBPrueba1'</span>, <span class="str">'UserAccess'</span>)
-<span class="kw">GO</span></div>
+          <div class="sql">
+  <span class="cm">-- Todas las BD del servidor:</span><br>
+  <span class="kw">EXEC</span> sp_helpdb<br>
+  <span class="kw">GO</span><br>
+  <br>
+  <span class="cm">-- Una BD específica:</span><br>
+  <span class="kw">EXEC</span> sp_helpdb DBPrueba1<br>
+  <span class="kw">GO</span><br>
+  <br>
+  <span class="cm">-- Verificar propiedad específica:</span><br>
+  <span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<br>
+  &nbsp;&nbsp;<span class="str">'DBPrueba1'</span>, <span class="str">'UserAccess'</span>)<br>
+  <span class="kw">GO</span>
+</div>
         </div>
         <div class="gcard fr" style="transition-delay:.3s">
           <h3 class="ct">⚙️ ALTER DATABASE — CONFIGURAR</h3>
           <p class="bt" style="font-size:12.5px">Permite modificar la configuración de una BD existente. Ejemplo — configurar como monousuaria:</p>
-          <div class="sql"><span class="kw">ALTER DATABASE</span> DBPrueba1
-<span class="kw">SET</span> <span class="nm">single_user</span>
-<span class="kw">GO</span></div>
+          <div class="sql">
+  <span class="kw">ALTER DATABASE</span> DBPrueba1<br>
+  <span class="kw">SET</span> <span class="nm">single_user</span><br>
+  <span class="kw">GO</span></div>
         </div>
       </div>
       <div class="gcard fr" style="transition-delay:.4s">
@@ -1093,7 +1096,7 @@ h3.ct{font-family:'Inter',sans-serif;font-size:14px;font-weight:700;color:var(--
       <div class="cdiv"></div>
       <p><strong>Game Master:</strong> Ing. Raúl Fernández Bejarano</p>
       <div class="cdiv"></div>
-      <p style="font-size:11px;font-family:'Share Tech Mono',monospace;color:var(--n1)">SQL SERVER 2022 · CAP. II · UPLA · 2025</p>
+      <p style="font-size:11px;font-family:'Share Tech Mono',monospace;color:var(--n1)">SQL SERVER 2022 · CAP. II · UPLA · 2026</p>
     </div>
   </div>
 </section>
