@@ -878,203 +878,224 @@ h3.ct{font-family:'Inter',sans-serif;font-size:14px;font-weight:700;color:var(--
 
     <!-- PRÁCTICAS -->
     <div class="act-wrap fu" style="transition-delay:.5s;margin-top:18px">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
-        <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--n3);font-weight:700">◈ PREGUNTAS PRÁCTICAS</div>
-        <div class="pill p2">10 MISIONES</div>
-      </div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--n3);font-weight:700">◈ PREGUNTAS PRÁCTICAS</div>
+    <div class="pill p2">10 MISIONES</div>
+  </div>
 
-      <div class="aitem">
-        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">1</span>Proyecto inventario: crear BD AlmacenDB con archivo primario 20MB, log 10MB, crecimiento 10%.</div>
-        <div class="ar">
-<div class="sql" style="margin-top:0"><span class="kw">USE</span> master
-<span class="kw">GO</span>
-<span class="kw">CREATE DATABASE</span> AlmacenDB
-<span class="kw">ON PRIMARY</span> (
-  <span class="fn">NAME</span> = <span class="str">'AlmacenDB_data'</span>,
-  <span class="fn">FILENAME</span> = <span class="str">'D:\SQLServer2022\Data\AlmacenDB.mdf'</span>,
-  <span class="fn">SIZE</span> = <span class="nm">20MB</span>,
-  <span class="fn">MAXSIZE</span> = <span class="nm">UNLIMITED</span>,
-  <span class="fn">FILEGROWTH</span> = <span class="nm">10%</span>
-)
-<span class="kw">LOG ON</span> (
-  <span class="fn">NAME</span> = <span class="str">'AlmacenDB_log'</span>,
-  <span class="fn">FILENAME</span> = <span class="str">'D:\SQLServer2022\Data\AlmacenDB.ldf'</span>,
-  <span class="fn">SIZE</span> = <span class="nm">10MB</span>,
-  <span class="fn">MAXSIZE</span> = <span class="nm">UNLIMITED</span>,
-  <span class="fn">FILEGROWTH</span> = <span class="nm">10%</span>
-)
-<span class="kw">GO</span></div>
-        </div>
-      </div>
-
-      <div class="aitem">
-        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">2</span>FacturacionDB que solo permita consultas de lectura. ¿Qué instrucción usarías?</div>
-        <div class="ar">
-<div class="sql" style="margin-top:0"><span class="kw">ALTER DATABASE</span> FacturacionDB
-<span class="kw">SET</span> <span class="nm">read_only</span>
-<span class="kw">GO</span>
-<span class="cm">-- Verificar el estado:</span>
-<span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<span class="str">'FacturacionDB'</span>, <span class="str">'Updateability'</span>)
-<span class="kw">GO</span>
-<span class="cm">-- Resultado esperado: READ_ONLY</span></div>
-        </div>
-      </div>
-
-      <div class="aitem">
-        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">3</span>¿Qué consulta ejecutarías para verificar qué bases de datos existen en el servidor y sus propiedades?</div>
-        <div class="ar">
-<div class="sql" style="margin-top:0"><span class="cm">-- Ver todas las BD con sp_helpdb:</span>
-<span class="kw">EXEC</span> sp_helpdb
-<span class="kw">GO</span>
-<span class="cm">-- Ver desde tabla del sistema:</span>
-<span class="kw">SELECT</span> name, database_id, create_date,
-       compatibility_level, state_desc
-<span class="kw">FROM</span> sys.databases
-<span class="kw">ORDER BY</span> name
-<span class="kw">GO</span>
-<span class="cm">-- Filtrar BDs de usuario (id > 4):</span>
-<span class="kw">SELECT</span> name <span class="kw">FROM</span> sys.databases
-<span class="kw">WHERE</span> database_id <span class="nm">&gt; 4</span>
-<span class="kw">GO</span></div>
-        </div>
-      </div>
-
-      <div class="aitem">
-        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">4</span>BD RRHHDB que permita únicamente un usuario a la vez. ¿Cómo configurarías esto?</div>
-        <div class="ar">
-<div class="sql" style="margin-top:0"><span class="kw">ALTER DATABASE</span> RRHHDB
-<span class="kw">SET</span> <span class="nm">single_user</span>
-<span class="nm">WITH ROLLBACK IMMEDIATE</span>
-<span class="kw">GO</span>
-<span class="cm">-- Verificar la configuración:</span>
-<span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<span class="str">'RRHHDB'</span>, <span class="str">'UserAccess'</span>)
-<span class="kw">GO</span>
-<span class="cm">-- Para restaurar acceso múltiple:</span>
-<span class="kw">ALTER DATABASE</span> RRHHDB <span class="kw">SET</span> <span class="nm">multi_user</span>
-<span class="kw">GO</span></div>
-        </div>
-      </div>
-
-      <div class="aitem">
-        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">5</span>Diseña una transacción que registre una venta en Factura, DetalleFactura y actualice el Stock de productos.</div>
-        <div class="ar">
-<div class="sql" style="margin-top:0"><span class="kw">BEGIN TRANSACTION</span>
-  <span class="kw">BEGIN TRY</span>
-    <span class="cm">-- Operación 1: Cabecera de la factura</span>
-    <span class="kw">INSERT INTO</span> Factura (idFactura, fecha, idCliente)
-    <span class="kw">VALUES</span> (<span class="nm">1001</span>, <span class="fn">GETDATE</span>(), <span class="nm">5</span>)
-    <span class="cm">-- Operación 2: Detalle de la venta</span>
-    <span class="kw">INSERT INTO</span> DetalleFactura (idFactura, idProducto, cantidad)
-    <span class="kw">VALUES</span> (<span class="nm">1001</span>, <span class="nm">42</span>, <span class="nm">10</span>)
-    <span class="cm">-- Operación 3: Actualizar stock</span>
-    <span class="kw">UPDATE</span> Producto <span class="kw">SET</span> stock = stock - <span class="nm">10</span>
-    <span class="kw">WHERE</span> idProducto = <span class="nm">42</span>
-    <span class="kw">COMMIT TRANSACTION</span>
-  <span class="kw">END TRY</span>
-  <span class="kw">BEGIN CATCH</span>
-    <span class="kw">ROLLBACK TRANSACTION</span>
-    <span class="kw">PRINT</span> <span class="str">'Error: transacción revertida'</span>
-  <span class="kw">END CATCH</span>
-<span class="kw">GO</span></div>
-        </div>
-      </div>
-
-      <div class="aitem">
-        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">6</span>En un ERP, crear un sinónimo para acceder a la tabla Clientes de VentasDB desde otra BD.</div>
-        <div class="ar">
-<div class="sql" style="margin-top:0"><span class="cm">-- Conectado a la BD de destino (ej: InventarioDBs):</span>
-<span class="kw">USE</span> InventarioDB
-<span class="kw">GO</span>
-<span class="cm">-- Crear sinónimo que apunta a Clientes en VentasDB:</span>
-<span class="kw">CREATE SYNONYM</span> ClientesVentas
-<span class="kw">FOR</span> VentasDB.dbo.Clientes
-<span class="kw">GO</span>
-<span class="cm">-- Ahora se puede usar el sinónimo directamente:</span>
-<span class="kw">SELECT</span> * <span class="kw">FROM</span> ClientesVentas
-<span class="kw">WHERE</span> ciudad = <span class="str">'Lima'</span>
-<span class="kw">GO</span></div>
-        </div>
-      </div>
-
-      <div class="aitem">
-        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">7</span>Sistema académico: validar que la nota de un estudiante esté entre 0 y 20. ¿Qué restricción aplicarías?</div>
-        <div class="ar">
-<div class="sql" style="margin-top:0"><span class="cm">-- Al crear la tabla:</span>
-<span class="kw">CREATE TABLE</span> Notas (
-  idNota    <span class="nm">INT</span> <span class="kw">PRIMARY KEY</span>,
-  idAlumno  <span class="nm">INT</span> <span class="kw">NOT NULL</span>,
-  idCurso   <span class="nm">INT</span> <span class="kw">NOT NULL</span>,
-  nota      <span class="nm">DECIMAL(4,2)</span> <span class="kw">NOT NULL</span>,
-  <span class="kw">CONSTRAINT</span> CK_Nota_Rango
-    <span class="kw">CHECK</span> (nota <span class="kw">BETWEEN</span> <span class="nm">0</span> <span class="kw">AND</span> <span class="nm">20</span>)
-)
-<span class="kw">GO</span>
-<span class="cm">-- O agregar a tabla existente:</span>
-<span class="kw">ALTER TABLE</span> Notas
-<span class="kw">ADD CONSTRAINT</span> CK_Nota_Rango
-  <span class="kw">CHECK</span> (nota <span class="kw">BETWEEN</span> <span class="nm">0</span> <span class="kw">AND</span> <span class="nm">20</span>)
-<span class="kw">GO</span></div>
-        </div>
-      </div>
-
-      <div class="aitem">
-        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">8</span>Almacenar documentos PDF dentro de SQL Server. ¿Qué tipo de dato usarías y cómo lo declararías?</div>
-        <div class="ar">Para almacenar archivos binarios como PDFs se usa el tipo <strong>VARBINARY(MAX)</strong> (hasta 2 GB) o <strong>FILESTREAM</strong> para archivos grandes:<div class="sql" style="margin-top:8px"><span class="kw">CREATE TABLE</span> Documentos (
-  idDocumento  <span class="nm">INT</span> <span class="kw">PRIMARY KEY</span>,
-  nombre       <span class="nm">VARCHAR(200)</span> <span class="kw">NOT NULL</span>,
-  tipo         <span class="nm">VARCHAR(50)</span>,
-  <span class="cm">-- Para PDFs hasta 2GB:</span>
-  contenido    <span class="nm">VARBINARY(MAX)</span>,
-  fechaSubida  <span class="nm">DATETIME</span> <span class="kw">DEFAULT</span> <span class="fn">GETDATE</span>()
-)
-<span class="kw">GO</span></div></div>
-      </div>
-
-      <div class="aitem">
-        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">9</span>Logística: crear una vista que muestre productos con stock menor a 10 unidades.</div>
-        <div class="ar">
-<div class="sql" style="margin-top:0"><span class="kw">CREATE VIEW</span> vw_StockCritico
-<span class="kw">AS</span>
-  <span class="kw">SELECT</span>
-    p.idProducto,
-    p.nombre,
-    p.stock,
-    c.nombre <span class="kw">AS</span> categoria
-  <span class="kw">FROM</span> Producto p
-  <span class="kw">INNER JOIN</span> Categoria c
-    <span class="kw">ON</span> p.idCategoria = c.idCategoria
-  <span class="kw">WHERE</span> p.stock <span class="nm">&lt; 10</span>
-<span class="kw">GO</span>
-<span class="cm">-- Usar la vista:</span>
-<span class="kw">SELECT</span> * <span class="kw">FROM</span> vw_StockCritico
-<span class="kw">ORDER BY</span> stock <span class="kw">ASC</span>
-<span class="kw">GO</span></div>
-        </div>
-      </div>
-
-      <div class="aitem">
-        <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">10</span>¿Cómo recuperarías el acceso a la BD ProyectoDB que quedó en estado de solo lectura?</div>
-        <div class="ar">
-<div class="sql" style="margin-top:0"><span class="cm">-- Paso 1: Conectarse como administrador (sysadmin)</span>
-<span class="kw">USE</span> master
-<span class="kw">GO</span>
-<span class="cm">-- Paso 2: Verificar el estado actual</span>
-<span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<span class="str">'ProyectoDB'</span>, <span class="str">'Updateability'</span>)
-<span class="kw">GO</span>
-<span class="cm">-- Paso 3: Restaurar acceso de lectura/escritura</span>
-<span class="kw">ALTER DATABASE</span> ProyectoDB
-<span class="kw">SET</span> <span class="nm">read_write</span>
-<span class="nm">WITH ROLLBACK IMMEDIATE</span>
-<span class="kw">GO</span>
-<span class="cm">-- Paso 4: Verificar que el cambio se aplicó</span>
-<span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<span class="str">'ProyectoDB'</span>, <span class="str">'Updateability'</span>)
-<span class="cm">-- Resultado esperado: READ_WRITE</span>
-<span class="kw">GO</span></div>
-        </div>
+  <div class="aitem">
+    <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">1</span>Proyecto inventario: crear BD AlmacenDB con archivo primario 20MB, log 10MB, crecimiento 10%.</div>
+    <div class="ar">
+      <div class="sql" style="margin-top:0">
+        <span class="kw">USE</span> master<br>
+        <span class="kw">GO</span><br>
+        <span class="kw">CREATE DATABASE</span> AlmacenDB<br>
+        <span class="kw">ON PRIMARY</span> (<br>
+        &nbsp;&nbsp;<span class="fn">NAME</span> = <span class="str">'AlmacenDB_data'</span>,<br>
+        &nbsp;&nbsp;<span class="fn">FILENAME</span> = <span class="str">'D:\SQLServer2022\Data\AlmacenDB.mdf'</span>,<br>
+        &nbsp;&nbsp;<span class="fn">SIZE</span> = <span class="nm">20MB</span>,<br>
+        &nbsp;&nbsp;<span class="fn">MAXSIZE</span> = <span class="nm">UNLIMITED</span>,<br>
+        &nbsp;&nbsp;<span class="fn">FILEGROWTH</span> = <span class="nm">10%</span><br>
+        )<br>
+        <span class="kw">LOG ON</span> (<br>
+        &nbsp;&nbsp;<span class="fn">NAME</span> = <span class="str">'AlmacenDB_log'</span>,<br>
+        &nbsp;&nbsp;<span class="fn">FILENAME</span> = <span class="str">'D:\SQLServer2022\Data\AlmacenDB.ldf'</span>,<br>
+        &nbsp;&nbsp;<span class="fn">SIZE</span> = <span class="nm">10MB</span>,<br>
+        &nbsp;&nbsp;<span class="fn">MAXSIZE</span> = <span class="nm">UNLIMITED</span>,<br>
+        &nbsp;&nbsp;<span class="fn">FILEGROWTH</span> = <span class="nm">10%</span><br>
+        )<br>
+        <span class="kw">GO</span>
       </div>
     </div>
   </div>
-</section>
+
+  <div class="aitem">
+    <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">2</span>FacturacionDB que solo permita consultas de lectura. ¿Qué instrucción usarías?</div>
+    <div class="ar">
+      <div class="sql" style="margin-top:0">
+        <span class="kw">ALTER DATABASE</span> FacturacionDB<br>
+        <span class="kw">SET</span> <span class="nm">read_only</span><br>
+        <span class="kw">GO</span><br>
+        <span class="cm">-- Verificar el estado:</span><br>
+        <span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<span class="str">'FacturacionDB'</span>, <span class="str">'Updateability'</span>)<br>
+        <span class="kw">GO</span><br>
+        <span class="cm">-- Resultado esperado: READ_ONLY</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="aitem">
+    <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">3</span>¿Qué consulta ejecutarías para verificar qué bases de datos existen en el servidor y sus propiedades?</div>
+    <div class="ar">
+      <div class="sql" style="margin-top:0">
+        <span class="cm">-- Ver todas las BD con sp_helpdb:</span><br>
+        <span class="kw">EXEC</span> sp_helpdb<br>
+        <span class="kw">GO</span><br>
+        <span class="cm">-- Ver desde tabla del sistema:</span><br>
+        <span class="kw">SELECT</span> name, database_id, create_date,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;compatibility_level, state_desc<br>
+        <span class="kw">FROM</span> sys.databases<br>
+        <span class="kw">ORDER BY</span> name<br>
+        <span class="kw">GO</span><br>
+        <span class="cm">-- Filtrar BDs de usuario (id > 4):</span><br>
+        <span class="kw">SELECT</span> name <span class="kw">FROM</span> sys.databases<br>
+        <span class="kw">WHERE</span> database_id <span class="nm">&gt; 4</span><br>
+        <span class="kw">GO</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="aitem">
+    <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">4</span>BD RRHHDB que permita únicamente un usuario a la vez. ¿Cómo configurarías esto?</div>
+    <div class="ar">
+      <div class="sql" style="margin-top:0">
+        <span class="kw">ALTER DATABASE</span> RRHHDB<br>
+        <span class="kw">SET</span> <span class="nm">single_user</span><br>
+        <span class="nm">WITH ROLLBACK IMMEDIATE</span><br>
+        <span class="kw">GO</span><br>
+        <span class="cm">-- Verificar la configuración:</span><br>
+        <span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<span class="str">'RRHHDB'</span>, <span class="str">'UserAccess'</span>)<br>
+        <span class="kw">GO</span><br>
+        <span class="cm">-- Para restaurar acceso múltiple:</span><br>
+        <span class="kw">ALTER DATABASE</span> RRHHDB <span class="kw">SET</span> <span class="nm">multi_user</span><br>
+        <span class="kw">GO</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="aitem">
+    <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">5</span>Diseña una transacción que registre una venta en Factura, DetalleFactura y actualice el Stock de productos.</div>
+    <div class="ar">
+      <div class="sql" style="margin-top:0">
+        <span class="kw">BEGIN TRANSACTION</span><br>
+        &nbsp;&nbsp;<span class="kw">BEGIN TRY</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">-- Operación 1: Cabecera de la factura</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">INSERT INTO</span> Factura (idFactura, fecha, idCliente)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">VALUES</span> (<span class="nm">1001</span>, <span class="fn">GETDATE</span>(), <span class="nm">5</span>)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">-- Operación 2: Detalle de la venta</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">INSERT INTO</span> DetalleFactura (idFactura, idProducto, cantidad)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">VALUES</span> (<span class="nm">1001</span>, <span class="nm">42</span>, <span class="nm">10</span>)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">-- Operación 3: Actualizar stock</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">UPDATE</span> Producto <span class="kw">SET</span> stock = stock - <span class="nm">10</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">WHERE</span> idProducto = <span class="nm">42</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">COMMIT TRANSACTION</span><br>
+        &nbsp;&nbsp;<span class="kw">END TRY</span><br>
+        &nbsp;&nbsp;<span class="kw">BEGIN CATCH</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">ROLLBACK TRANSACTION</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">PRINT</span> <span class="str">'Error: transacción revertida'</span><br>
+        &nbsp;&nbsp;<span class="kw">END CATCH</span><br>
+        <span class="kw">GO</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="aitem">
+    <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">6</span>En un ERP, crear un sinónimo para acceder a la tabla Clientes de VentasDB desde otra BD.</div>
+    <div class="ar">
+      <div class="sql" style="margin-top:0">
+        <span class="cm">-- Conectado a la BD de destino (ej: InventarioDBs):</span><br>
+        <span class="kw">USE</span> InventarioDB<br>
+        <span class="kw">GO</span><br>
+        <span class="cm">-- Crear sinónimo que apunta a Clientes en VentasDB:</span><br>
+        <span class="kw">CREATE SYNONYM</span> ClientesVentas<br>
+        <span class="kw">FOR</span> VentasDB.dbo.Clientes<br>
+        <span class="kw">GO</span><br>
+        <span class="cm">-- Ahora se puede usar el sinónimo directamente:</span><br>
+        <span class="kw">SELECT</span> * <span class="kw">FROM</span> ClientesVentas<br>
+        <span class="kw">WHERE</span> ciudad = <span class="str">'Lima'</span><br>
+        <span class="kw">GO</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="aitem">
+    <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">7</span>Sistema académico: validar que la nota de un estudiante esté entre 0 y 20. ¿Qué restricción aplicarías?</div>
+    <div class="ar">
+      <div class="sql" style="margin-top:0">
+        <span class="cm">-- Al crear la tabla:</span><br>
+        <span class="kw">CREATE TABLE</span> Notas (<br>
+        &nbsp;&nbsp;idNota&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">INT</span> <span class="kw">PRIMARY KEY</span>,<br>
+        &nbsp;&nbsp;idAlumno&nbsp;&nbsp;<span class="nm">INT</span> <span class="kw">NOT NULL</span>,<br>
+        &nbsp;&nbsp;idCurso&nbsp;&nbsp;&nbsp;<span class="nm">INT</span> <span class="kw">NOT NULL</span>,<br>
+        &nbsp;&nbsp;nota&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">DECIMAL(4,2)</span> <span class="kw">NOT NULL</span>,<br>
+        &nbsp;&nbsp;<span class="kw">CONSTRAINT</span> CK_Nota_Rango<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">CHECK</span> (nota <span class="kw">BETWEEN</span> <span class="nm">0</span> <span class="kw">AND</span> <span class="nm">20</span>)<br>
+        )<br>
+        <span class="kw">GO</span><br>
+        <span class="cm">-- O agregar a tabla existente:</span><br>
+        <span class="kw">ALTER TABLE</span> Notas<br>
+        <span class="kw">ADD CONSTRAINT</span> CK_Nota_Rango<br>
+        &nbsp;&nbsp;<span class="kw">CHECK</span> (nota <span class="kw">BETWEEN</span> <span class="nm">0</span> <span class="kw">AND</span> <span class="nm">20</span>)<br>
+        <span class="kw">GO</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="aitem">
+    <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">8</span>Almacenar documentos PDF dentro de SQL Server. ¿Qué tipo de dato usarías y cómo lo declararías?</div>
+    <div class="ar">
+      Para almacenar archivos binarios como PDFs se usa el tipo <strong>VARBINARY(MAX)</strong> (hasta 2 GB) o <strong>FILESTREAM</strong> para archivos grandes:
+      <div class="sql" style="margin-top:8px">
+        <span class="kw">CREATE TABLE</span> Documentos (<br>
+        &nbsp;&nbsp;idDocumento&nbsp;&nbsp;<span class="nm">INT</span> <span class="kw">PRIMARY KEY</span>,<br>
+        &nbsp;&nbsp;nombre&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">VARCHAR(200)</span> <span class="kw">NOT NULL</span>,<br>
+        &nbsp;&nbsp;tipo&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">VARCHAR(50)</span>,<br>
+        &nbsp;&nbsp;<span class="cm">-- Para PDFs hasta 2GB:</span><br>
+        &nbsp;&nbsp;contenido&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">VARBINARY(MAX)</span>,<br>
+        &nbsp;&nbsp;fechaSubida&nbsp;&nbsp;<span class="nm">DATETIME</span> <span class="kw">DEFAULT</span> <span class="fn">GETDATE</span>()<br>
+        )<br>
+        <span class="kw">GO</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="aitem">
+    <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">9</span>Logística: crear una vista que muestre productos con stock menor a 10 unidades.</div>
+    <div class="ar">
+      <div class="sql" style="margin-top:0">
+        <span class="kw">CREATE VIEW</span> vw_StockCritico<br>
+        <span class="kw">AS</span><br>
+        &nbsp;&nbsp;<span class="kw">SELECT</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;p.idProducto,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;p.nombre,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;p.stock,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;c.nombre <span class="kw">AS</span> categoria<br>
+        &nbsp;&nbsp;<span class="kw">FROM</span> Producto p<br>
+        &nbsp;&nbsp;<span class="kw">INNER JOIN</span> Categoria c<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">ON</span> p.idCategoria = c.idCategoria<br>
+        &nbsp;&nbsp;<span class="kw">WHERE</span> p.stock <span class="nm">&lt; 10</span><br>
+        <span class="kw">GO</span><br>
+        <span class="cm">-- Usar la vista:</span><br>
+        <span class="kw">SELECT</span> * <span class="kw">FROM</span> vw_StockCritico<br>
+        <span class="kw">ORDER BY</span> stock <span class="kw">ASC</span><br>
+        <span class="kw">GO</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="aitem">
+    <div class="aq"><span class="qnum" style="background:linear-gradient(135deg,var(--n3),#1a7040)">10</span>¿Cómo recuperarías el acceso a la BD ProyectoDB que quedó en estado de solo lectura?</div>
+    <div class="ar">
+      <div class="sql" style="margin-top:0">
+        <span class="cm">-- Paso 1: Conectarse como administrador (sysadmin)</span><br>
+        <span class="kw">USE</span> master<br>
+        <span class="kw">GO</span><br>
+        <span class="cm">-- Paso 2: Verificar el estado actual</span><br>
+        <span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<span class="str">'ProyectoDB'</span>, <span class="str">'Updateability'</span>)<br>
+        <span class="kw">GO</span><br>
+        <span class="cm">-- Paso 3: Restaurar acceso de lectura/escritura</span><br>
+        <span class="kw">ALTER DATABASE</span> ProyectoDB<br>
+        <span class="kw">SET</span> <span class="nm">read_write</span><br>
+        <span class="nm">WITH ROLLBACK IMMEDIATE</span><br>
+        <span class="kw">GO</span><br>
+        <span class="cm">-- Paso 4: Verificar que el cambio se aplicó</span><br>
+        <span class="kw">SELECT</span> <span class="fn">DatabasePropertyEx</span>(<span class="str">'ProyectoDB'</span>, <span class="str">'Updateability'</span>)<br>
+        <span class="cm">-- Resultado esperado: READ_WRITE</span><br>
+        <span class="kw">GO</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ══ 9: FINAL ══ -->
 <section id="s9">
